@@ -29,6 +29,36 @@
       "is_active": true,
       "created_at": "2026-11-20T16:29:37.803Z",
       "updated_at": "2026-11-20T16:29:37.803Z"
+    },
+    {
+      "id": "friend-1795192480898",
+      "role": "friend",
+      "full_name": "mahi",
+      "email": "my6982363@gmail.com",
+      "password": "MAHESHPALVAI@123",
+      "is_active": true,
+      "created_at": "2026-11-20T16:34:40.898Z",
+      "updated_at": "2026-11-20T16:34:40.898Z"
+    },
+    {
+      "id": "admin-1795193182677",
+      "role": "admin",
+      "full_name": "Coordinator 3604",
+      "email": "eventadmin3604@campusbite.com",
+      "password": "SecretPass123",
+      "is_active": true,
+      "created_at": "2026-11-20T16:46:22.677Z",
+      "updated_at": "2026-11-20T16:46:22.677Z"
+    },
+    {
+      "id": "friend-1795193182688",
+      "role": "friend",
+      "full_name": "Student Volunteer 1855",
+      "email": "student1855@campusbite.com",
+      "password": "SecretPass123",
+      "is_active": true,
+      "created_at": "2026-11-20T16:46:22.688Z",
+      "updated_at": "2026-11-20T16:46:22.688Z"
     }
   ],
   "campuses": [
@@ -257,9 +287,82 @@
       "collector_name": "Sneha Patel",
       "collector_phone": "9845123456",
       "created_at": "2026-11-20T16:23:32.484Z"
+    },
+    {
+      "id": "team-1795193241438",
+      "name": "Phoenix Coders",
+      "campus_id": "c1",
+      "collector_name": "Rohit Verma",
+      "collector_phone": "9876500001",
+      "created_by": "friend-001",
+      "created_at": "2026-11-20T16:47:21.438Z",
+      "campus": {
+        "id": "c1",
+        "name": "Main Campus (North Wing)",
+        "is_active": true,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
     }
   ],
-  "orders": [],
+  "orders": [
+    {
+      "id": "order-1795193241438",
+      "team_id": "team-1795193241438",
+      "friend_id": "friend-001",
+      "status": "Pending",
+      "notes": "Collect at reception",
+      "total_amount": 600,
+      "total_cost": 430,
+      "created_at": "2026-11-20T16:47:21.438Z",
+      "updated_at": "2026-11-20T16:47:21.438Z",
+      "team": {
+        "id": "team-1795193241438",
+        "name": "Phoenix Coders",
+        "campus_id": "c1",
+        "collector_name": "Rohit Verma",
+        "collector_phone": "9876500001",
+        "created_by": "friend-001",
+        "created_at": "2026-11-20T16:47:21.438Z",
+        "campus": {
+          "id": "c1",
+          "name": "Main Campus (North Wing)",
+          "is_active": true,
+          "created_at": "2026-11-20T16:23:32.484Z"
+        }
+      },
+      "friend": {
+        "id": "friend-001",
+        "full_name": "Rahul Sharma",
+        "email": "friend@campusbite.com"
+      },
+      "items": [
+        {
+          "id": "oi-1795193241438-0.6661673599011102",
+          "order_id": "order-1795193241438",
+          "food_variant_id": "v1_1",
+          "food_name_snapshot": "Chicken Biryani",
+          "variant_name_snapshot": "Full",
+          "quantity": 2,
+          "unit_selling_price": 220,
+          "unit_purchase_cost": 160,
+          "subtotal_price": 440,
+          "subtotal_cost": 320
+        },
+        {
+          "id": "oi-1795193241438-0.03395258710190574",
+          "order_id": "order-1795193241438",
+          "food_variant_id": "v2_1",
+          "food_name_snapshot": "VEG Biryani",
+          "variant_name_snapshot": "Full",
+          "quantity": 1,
+          "unit_selling_price": 160,
+          "unit_purchase_cost": 110,
+          "subtotal_price": 160,
+          "subtotal_cost": 110
+        }
+      ]
+    }
+  ],
   "settings": {
     "ordering_open": true,
     "event_name": "CampusBite Festival",

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   UtensilsCrossed,
   Lock,
@@ -14,13 +13,14 @@ import {
   UserPlus,
   LogIn,
   CheckCircle2,
-  Sparkles,
+  ShieldCheck,
+  KeyRound,
 } from 'lucide-react';
 
 type AuthMode = 'signin' | 'signup';
+type UserRole = 'friend' | 'admin';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [mode, setMode] = useState<AuthMode>('signin');
 
   // Common Fields
@@ -31,13 +31,16 @@ export default function LoginPage() {
   // Sign-Up Specific Fields
   const [fullName, setFullName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('friend');
+  const [adminCode, setAdminCode] = useState('');
 
   // Status & Feedback
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Safe JSON parser for responses to prevent "Unexpected token '<'..."
+  // Safe JSON parser for responses
   const safeParseResponse = async (res: Response) => {
     const contentType = res.headers.get('content-type') || '';
     const text = await res.text();
@@ -50,13 +53,13 @@ export default function LoginPage() {
     }
     if (text.includes('<!DOCTYPE') || text.includes('<html')) {
       throw new Error(
-        'Server returned an HTML response. Please check server logs or database configuration in .env.local.'
+        'Server returned an HTML error. Please check server logs or database configuration.'
       );
     }
     throw new Error(text || `Server returned status ${res.status}`);
   };
 
-  // Handle Login via /api/auth/login
+  // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -79,24 +82,24 @@ export default function LoginPage() {
         throw new Error(resData.error || 'Login failed. Please check your credentials.');
       }
 
-      setSuccessMessage('Sign in successful! Redirecting...');
+      setSuccessMessage(
+        `Welcome back! Opening ${resData.role === 'admin' ? 'Admin Dashboard' : 'Collector Portal'}...`
+      );
+      setRedirecting(true);
 
-      // Redirect according to returned role
-      if (resData.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/friend');
-      }
-      router.refresh();
+      // Full navigation to ensure session cookie is sent and server re-renders
+      const destination = resData.role === 'admin' ? '/admin' : '/friend';
+      setTimeout(() => {
+        window.location.href = destination;
+      }, 400);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Login failed';
       setErrorMessage(msg);
-    } finally {
       setLoading(false);
     }
   };
 
-  // Handle Account Creation (Sign Up) via /api/auth/register
+  // Handle Account Creation (Sign Up)
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -125,7 +128,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // 1. Call server-side registration endpoint
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -133,6 +135,8 @@ export default function LoginPage() {
           full_name: fullName.trim(),
           email: email.trim().toLowerCase(),
           password,
+          role: selectedRole,
+          admin_code: selectedRole === 'admin' ? adminCode.trim() || 'ADMIN2026' : undefined,
         }),
       });
 
@@ -142,20 +146,23 @@ export default function LoginPage() {
         throw new Error(resData.error || 'Failed to create account.');
       }
 
-      setSuccessMessage('Account created successfully! Redirecting to food collection...');
+      setSuccessMessage(
+        `${selectedRole === 'admin' ? 'Admin' : 'Friend'} account created! Loading your dashboard...`
+      );
+      setRedirecting(true);
 
-      // Registration endpoint automatically signs in and sets session cookie
-      router.push('/friend');
-      router.refresh();
+      const destination = resData.role === 'admin' ? '/admin' : '/friend';
+      setTimeout(() => {
+        window.location.href = destination;
+      }, 500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to create account.';
       setErrorMessage(msg);
-    } finally {
       setLoading(false);
     }
   };
 
-  // Quick helper to fill test credentials for rapid testing
+  // Quick 1-click credentials filler
   const fillCredentials = (userEmail: string, userPass: string) => {
     setMode('signin');
     setEmail(userEmail);
@@ -165,25 +172,25 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50/50 via-slate-50 to-orange-50/40 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50/60 via-slate-50 to-orange-50/50 px-4 py-8">
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white shadow-xl shadow-brand-500/20 mb-3">
-            <UtensilsCrossed className="w-8 h-8" />
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white shadow-xl shadow-brand-500/20 mb-3">
+            <UtensilsCrossed className="w-7 h-7 sm:w-8 sm:h-8" />
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
             Campus<span className="text-brand-600">Bite</span>
           </h1>
-          <p className="text-sm font-medium text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
             College Event Food Order Management
           </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 p-6 sm:p-8">
+        {/* Login / Register Card */}
+        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 p-5 sm:p-7 transition-all">
           {/* Mode Switch Tabs */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-xl mb-6">
+          <div className="flex items-center p-1 bg-slate-100 rounded-xl mb-5">
             <button
               type="button"
               onClick={() => {
@@ -218,26 +225,26 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="mb-5">
-            <h2 className="text-xl font-bold text-slate-900">
-              {mode === 'signin' ? 'Welcome Back' : 'Create an Account'}
+          <div className="mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+              {mode === 'signin' ? 'Sign In' : 'Create an Account'}
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-0.5">
               {mode === 'signin'
-                ? 'Sign in to access your orders and manage event collections'
-                : 'Register as an event friend / order collector across campuses'}
+                ? 'Sign in as Administrator or Friend Collector'
+                : 'Select your role and create your event account'}
             </p>
           </div>
 
           {errorMessage && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200/80 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
+            <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="flex-1 font-medium leading-relaxed">{errorMessage}</div>
             </div>
           )}
 
           {successMessage && (
-            <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs flex items-start gap-2.5 animate-in fade-in">
+            <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2 animate-in fade-in">
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
               <div className="flex-1 font-medium leading-relaxed">{successMessage}</div>
             </div>
@@ -245,9 +252,9 @@ export default function LoginPage() {
 
           {/* SIGN IN FORM */}
           {mode === 'signin' && (
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div className="relative">
@@ -260,13 +267,13 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@campus.edu"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                   Password
                 </label>
                 <div className="relative">
@@ -279,7 +286,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
                   />
                   <button
                     type="button"
@@ -293,10 +300,15 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full mt-2 py-3 px-4 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-700 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-brand-500/50 shadow-md shadow-brand-500/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                disabled={loading || redirecting}
+                className="w-full mt-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-700 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-brand-500/50 shadow-md shadow-brand-500/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
-                {loading ? (
+                {redirecting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Loading portal...</span>
+                  </>
+                ) : loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     <span>Signing in...</span>
@@ -308,14 +320,90 @@ export default function LoginPage() {
                   </>
                 )}
               </button>
+
+              {/* Instant 1-Click Role Logins */}
+              <div className="pt-3 border-t border-slate-100">
+                <span className="block text-[11px] font-bold text-slate-500 mb-2">
+                  1-Click Quick Sign-In Options:
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fillCredentials('admin@campusbite.com', 'Admin123456')}
+                    className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/70 hover:bg-amber-100/70 text-left transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-amber-900">
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Admin</span>
+                    </div>
+                    <p className="text-[10px] text-amber-700 mt-0.5 truncate">
+                      Full event control
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fillCredentials('friend@campusbite.com', 'Friend123456')}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                      <User className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Friend</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5 truncate">
+                      Collect food orders
+                    </p>
+                  </button>
+                </div>
+              </div>
             </form>
           )}
 
-          {/* CREATE ACCOUNT (SIGN UP) FORM */}
+          {/* CREATE ACCOUNT FORM (WITH ADMIN & FRIEND OPTION) */}
           {mode === 'signup' && (
-            <form onSubmit={handleSignUp} className="space-y-4">
+            <form onSubmit={handleSignUp} className="space-y-3.5">
+              {/* Role Picker: Friend vs Admin */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                  Select Your Account Role *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole('friend')}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      selectedRole === 'friend'
+                        ? 'border-brand-500 bg-brand-50/80 text-brand-900 ring-2 ring-brand-500/20'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <User className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Friend</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Collect food orders</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole('admin')}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      selectedRole === 'admin'
+                        ? 'border-amber-500 bg-amber-50/80 text-amber-900 ring-2 ring-amber-500/20'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Admin</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Event Organizer</p>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                   Full Name
                 </label>
                 <div className="relative">
@@ -328,13 +416,13 @@ export default function LoginPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="e.g. Priya Sharma"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                   College Email
                 </label>
                 <div className="relative">
@@ -346,15 +434,15 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="priya@campus.edu"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
+                    placeholder="name@campus.edu"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Password (min 6 chars)
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
+                  Password (min 6 characters)
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -367,7 +455,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
                   />
                   <button
                     type="button"
@@ -380,7 +468,7 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -394,31 +482,48 @@ export default function LoginPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all bg-slate-50/50 hover:bg-white"
                   />
                 </div>
               </div>
 
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/70 text-[11px] text-amber-900">
-                <span className="font-bold">Role: Friend / Food Collector</span>
-                <p className="mt-0.5 opacity-80">
-                  Allows registering student teams and placing food orders across campuses.
-                </p>
-              </div>
+              {selectedRole === 'admin' && (
+                <div>
+                  <label className="block text-[11px] font-bold text-amber-800 mb-1 uppercase tracking-wider flex items-center gap-1">
+                    <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                    Admin Security Passcode
+                  </label>
+                  <input
+                    type="text"
+                    value={adminCode}
+                    onChange={(e) => setAdminCode(e.target.value)}
+                    placeholder="Use code: ADMIN2026"
+                    className="w-full px-3.5 py-2 rounded-xl border border-amber-300 bg-amber-50/40 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                  />
+                  <p className="text-[10px] text-amber-700 mt-1">
+                    Default event passcode: <code className="font-bold">ADMIN2026</code>
+                  </p>
+                </div>
+              )}
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full mt-2 py-3 px-4 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-700 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-brand-500/50 shadow-md shadow-brand-500/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                disabled={loading || redirecting}
+                className="w-full mt-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-700 hover:to-amber-600 focus:outline-none focus:ring-2 focus:ring-brand-500/50 shadow-md shadow-brand-500/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
-                {loading ? (
+                {redirecting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Opening dashboard...</span>
+                  </>
+                ) : loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     <span>Creating account...</span>
                   </>
                 ) : (
                   <>
-                    <span>Create Friend Account</span>
+                    <span>Create {selectedRole === 'admin' ? 'Admin' : 'Friend'} Account</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </>
                 )}
@@ -426,34 +531,11 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* Quick Demo Test Accounts Helper */}
-          <div className="mt-5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600">
-            <span className="font-bold text-slate-800 flex items-center gap-1 mb-1.5">
-              <Sparkles className="w-3 h-3 text-amber-500" /> Demo Quick Sign-In:
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => fillCredentials('admin@campusbite.com', 'Admin123456')}
-                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-brand-300 font-semibold text-slate-700 cursor-pointer text-[10px]"
-              >
-                Admin (admin@campusbite.com)
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredentials('friend@campusbite.com', 'Friend123456')}
-                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-brand-300 font-semibold text-slate-700 cursor-pointer text-[10px]"
-              >
-                Friend (friend@campusbite.com)
-              </button>
-            </div>
-          </div>
-
           {/* Bottom Switcher */}
-          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
+          <div className="mt-4 pt-3.5 border-t border-slate-100 text-center">
             {mode === 'signin' ? (
               <p className="text-xs text-slate-500">
-                Don&apos;t have an account yet?{' '}
+                Don&apos;t have an account?{' '}
                 <button
                   type="button"
                   onClick={() => {
@@ -485,7 +567,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Bottom helper */}
+        {/* Footer */}
         <div className="mt-6 text-center text-xs text-slate-400">
           CampusBite Event System &bull; Fast, Streamlined &amp; Secure
         </div>

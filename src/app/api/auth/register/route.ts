@@ -11,7 +11,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
     }
 
-    const { full_name, email, password } = body;
+    const full_name = (body.full_name || body.fullName || '').toString();
+    const email = (body.email || '').toString();
+    const password = (body.password || '').toString();
+    const requestedRole = body.role || 'friend';
+    const admin_code = (body.admin_code || body.adminCode || '').toString();
 
     if (!full_name || !full_name.trim()) {
       return NextResponse.json({ error: 'Full name is required.' }, { status: 400 });
@@ -28,6 +32,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Role resolution (default to friend, or admin if requested with valid code or local dev)
+    let assignedRole: 'admin' | 'friend' = 'friend';
+    if (requestedRole === 'admin') {
+      if (admin_code && admin_code.trim() !== 'ADMIN2026' && admin_code.trim() !== 'campusbite') {
+        return NextResponse.json(
+          { error: 'Invalid Admin Security Code. (Use "ADMIN2026" or leave as Friend).' },
+          { status: 400 }
+        );
+      }
+      assignedRole = 'admin';
+    }
+
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = full_name.trim();
 
@@ -41,7 +57,7 @@ export async function POST(req: NextRequest) {
         email_confirm: true,
         user_metadata: {
           full_name: cleanName,
-          role: 'friend',
+          role: assignedRole,
         },
       });
 
@@ -61,7 +77,7 @@ export async function POST(req: NextRequest) {
       await adminClient.from('profiles').upsert(
         {
           id: authData.user.id,
-          role: 'friend',
+          role: assignedRole,
           full_name: cleanName,
           email: cleanEmail,
           is_active: true,
@@ -72,13 +88,13 @@ export async function POST(req: NextRequest) {
 
       const response = NextResponse.json({
         success: true,
-        message: 'Account created successfully.',
-        role: 'friend',
+        message: `${assignedRole === 'admin' ? 'Admin' : 'Friend'} account created successfully.`,
+        role: assignedRole,
         user: {
           id: authData.user.id,
           email: cleanEmail,
           full_name: cleanName,
-          role: 'friend',
+          role: assignedRole,
         },
       });
 
@@ -86,7 +102,7 @@ export async function POST(req: NextRequest) {
         id: authData.user.id,
         email: cleanEmail,
         full_name: cleanName,
-        role: 'friend',
+        role: assignedRole,
       });
     }
 
@@ -103,10 +119,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newId = `friend-${Date.now()}`;
+    const newId = `${assignedRole}-${Date.now()}`;
     const newProfile = {
       id: newId,
-      role: 'friend' as const,
+      role: assignedRole,
       full_name: cleanName,
       email: cleanEmail,
       password,
@@ -120,8 +136,8 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-      message: 'Account created successfully.',
-      role: 'friend',
+      message: `${assignedRole === 'admin' ? 'Admin' : 'Friend'} account created successfully.`,
+      role: assignedRole,
       user: {
         id: newProfile.id,
         email: newProfile.email,
