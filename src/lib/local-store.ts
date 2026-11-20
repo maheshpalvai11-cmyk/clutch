@@ -92,6 +92,11 @@ export interface LocalStoreData {
 
 const DATA_FILE = path.join(process.cwd(), '.data', 'store.json');
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __CAMPUSBITE_STORE__: LocalStoreData | undefined;
+}
+
 function getInitialData(): LocalStoreData {
   return {
     profiles: [
@@ -245,21 +250,28 @@ function getInitialData(): LocalStoreData {
 }
 
 export function getLocalStore(): LocalStoreData {
+  if (globalThis.__CAMPUSBITE_STORE__) {
+    return globalThis.__CAMPUSBITE_STORE__;
+  }
+
   try {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
-      return JSON.parse(content);
+      globalThis.__CAMPUSBITE_STORE__ = JSON.parse(content);
+      return globalThis.__CAMPUSBITE_STORE__!;
     }
   } catch {
-    // If read fails, fallback
+    // Disk read fallback
   }
 
   const initial = getInitialData();
+  globalThis.__CAMPUSBITE_STORE__ = initial;
   saveLocalStore(initial);
   return initial;
 }
 
 export function saveLocalStore(data: LocalStoreData) {
+  globalThis.__CAMPUSBITE_STORE__ = data;
   try {
     const dir = path.dirname(DATA_FILE);
     if (!fs.existsSync(dir)) {
@@ -267,6 +279,6 @@ export function saveLocalStore(data: LocalStoreData) {
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch {
-    // Write fallback
+    // Disk write fallback
   }
 }

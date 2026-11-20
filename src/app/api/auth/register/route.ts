@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseAdminConfigured } from '@/lib/supabase/config';
 import { getLocalStore, saveLocalStore } from '@/lib/local-store';
-import { setSessionCookie } from '@/lib/session';
+import { attachSessionCookie } from '@/lib/session';
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = full_name.trim();
 
-    // 1. SUPABASE MODE (When credentials are fully provided)
+    // 1. REAL SUPABASE MODE
     if (isSupabaseAdminConfigured()) {
       const adminClient = createAdminClient();
 
@@ -70,14 +70,7 @@ export async function POST(req: NextRequest) {
         { onConflict: 'id' }
       );
 
-      setSessionCookie({
-        id: authData.user.id,
-        email: cleanEmail,
-        full_name: cleanName,
-        role: 'friend',
-      });
-
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         message: 'Account created successfully.',
         role: 'friend',
@@ -88,9 +81,16 @@ export async function POST(req: NextRequest) {
           role: 'friend',
         },
       });
+
+      return attachSessionCookie(response, {
+        id: authData.user.id,
+        email: cleanEmail,
+        full_name: cleanName,
+        role: 'friend',
+      });
     }
 
-    // 2. LOCAL DEV / DEMO MODE (Seamless fallback when Supabase is not configured yet)
+    // 2. LOCAL DEV / DEMO STORE MODE
     const store = getLocalStore();
     const existing = store.profiles.find(
       (p) => p.email.toLowerCase() === cleanEmail
@@ -118,14 +118,7 @@ export async function POST(req: NextRequest) {
     store.profiles.push(newProfile);
     saveLocalStore(store);
 
-    setSessionCookie({
-      id: newProfile.id,
-      email: newProfile.email,
-      full_name: newProfile.full_name,
-      role: newProfile.role,
-    });
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Account created successfully.',
       role: 'friend',
@@ -135,6 +128,13 @@ export async function POST(req: NextRequest) {
         full_name: newProfile.full_name,
         role: newProfile.role,
       },
+    });
+
+    return attachSessionCookie(response, {
+      id: newProfile.id,
+      email: newProfile.email,
+      full_name: newProfile.full_name,
+      role: newProfile.role,
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Server error occurred.';

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createClient } from '@/lib/supabase/server';
 import { getLocalStore } from '@/lib/local-store';
-import { setSessionCookie } from '@/lib/session';
+import { attachSessionCookie } from '@/lib/session';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. IF REAL SUPABASE IS CONFIGURED
+    // 1. REAL SUPABASE MODE
     if (isSupabaseConfigured()) {
       const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -54,21 +54,21 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      setSessionCookie({
+      const response = NextResponse.json({
+        success: true,
+        role: profile.role,
+        user: profile,
+      });
+
+      return attachSessionCookie(response, {
         id: profile.id,
         email: profile.email,
         full_name: profile.full_name,
         role: profile.role,
       });
-
-      return NextResponse.json({
-        success: true,
-        role: profile.role,
-        user: profile,
-      });
     }
 
-    // 2. LOCAL DEV / DEMO STORE MODE (When Supabase keys are not set yet)
+    // 2. LOCAL DEV / DEMO STORE MODE
     const store = getLocalStore();
     const user = store.profiles.find(
       (p) => p.email.toLowerCase() === cleanEmail
@@ -95,14 +95,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    setSessionCookie({
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name,
-      role: user.role,
-    });
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       role: user.role,
       user: {
@@ -111,6 +104,13 @@ export async function POST(req: NextRequest) {
         full_name: user.full_name,
         role: user.role,
       },
+    });
+
+    return attachSessionCookie(response, {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Login failed';
