@@ -2,7 +2,9 @@ import React from 'react';
 import { redirect } from 'next/navigation';
 import { getAuthSession } from '@/lib/auth-check';
 import { FriendNav } from '@/components/friend/FriendNav';
+import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getLocalStore } from '@/lib/local-store';
 import { Megaphone, AlertCircle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -18,16 +20,30 @@ export default async function FriendLayout({
     redirect('/login');
   }
 
-  // Fetch event announcement and ordering status
-  const adminClient = createAdminClient();
-  const { data: settings } = await adminClient
-    .from('event_settings')
-    .select('*')
-    .eq('id', 1)
-    .single();
+  let isOrderingOpen = true;
+  let announcement = 'Welcome to CampusBite! Orders are currently being accepted.';
 
-  const isOrderingOpen = settings?.ordering_open ?? true;
-  const announcement = settings?.announcement;
+  if (isSupabaseConfigured()) {
+    try {
+      const adminClient = createAdminClient();
+      const { data: settings } = await adminClient
+        .from('event_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (settings) {
+        isOrderingOpen = settings.ordering_open ?? true;
+        announcement = settings.announcement;
+      }
+    } catch {
+      // Fallback
+    }
+  } else {
+    const store = getLocalStore();
+    isOrderingOpen = store.settings.ordering_open;
+    announcement = store.settings.announcement;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">

@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import {
   UtensilsCrossed,
   Lock,
@@ -15,7 +14,7 @@ import {
   UserPlus,
   LogIn,
   CheckCircle2,
-  AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 
 type AuthMode = 'signin' | 'signup';
@@ -37,14 +36,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [envMissing, setEnvMissing] = useState(false);
-
-  useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('your-project')) {
-      setEnvMissing(true);
-    }
-  }, []);
 
   // Safe JSON parser for responses to prevent "Unexpected token '<'..."
   const safeParseResponse = async (res: Response) => {
@@ -57,63 +48,41 @@ export default function LoginPage() {
         // Fallback below
       }
     }
-    // If HTML or non-JSON was returned (e.g. 500 error page from server)
     if (text.includes('<!DOCTYPE') || text.includes('<html')) {
       throw new Error(
-        'Database connection not ready. Please verify your Supabase URL and keys in .env.local.'
+        'Server returned an HTML response. Please check server logs or database configuration in .env.local.'
       );
     }
     throw new Error(text || `Server returned status ${res.status}`);
   };
 
-  // Handle Login
+  // Handle Login via /api/auth/login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
-
-    if (envMissing) {
-      setErrorMessage(
-        'Database is not connected. Please add your Supabase credentials to .env.local (refer to .env.example).'
-      );
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+        }),
       });
 
-      if (error) {
-        throw new Error(error.message || 'Invalid email or password');
+      const resData = await safeParseResponse(res);
+
+      if (!res.ok) {
+        throw new Error(resData.error || 'Login failed. Please check your credentials.');
       }
 
-      if (!data.user) {
-        throw new Error('User not found');
-      }
+      setSuccessMessage('Sign in successful! Redirecting...');
 
-      // Check user profile and active status
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-
-      if (profileError || !profile) {
-        throw new Error('User profile record not found. Please contact the administrator.');
-      }
-
-      if (!profile.is_active) {
-        await supabase.auth.signOut();
-        throw new Error('Your account is currently deactivated. Please contact the administrator.');
-      }
-
-      // Redirect according to role
-      if (profile.role === 'admin') {
+      // Redirect according to returned role
+      if (resData.role === 'admin') {
         router.push('/admin');
       } else {
         router.push('/friend');
@@ -127,18 +96,11 @@ export default function LoginPage() {
     }
   };
 
-  // Handle Account Creation (Sign Up)
+  // Handle Account Creation (Sign Up) via /api/auth/register
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
-
-    if (envMissing) {
-      setErrorMessage(
-        'Database is not connected. Please add your Supabase credentials to .env.local (refer to .env.example).'
-      );
-      return;
-    }
 
     if (!fullName.trim()) {
       setErrorMessage('Please enter your full name.');
@@ -180,22 +142,9 @@ export default function LoginPage() {
         throw new Error(resData.error || 'Failed to create account.');
       }
 
-      setSuccessMessage('Account created successfully! Signing you in...');
+      setSuccessMessage('Account created successfully! Redirecting to food collection...');
 
-      // 2. Auto sign in immediately so user doesn't have to re-enter credentials
-      const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
-      if (signInError) {
-        // Fallback: switch to sign in mode with credentials filled
-        setMode('signin');
-        setSuccessMessage('Account created! Please sign in with your password.');
-        return;
-      }
-
+      // Registration endpoint automatically signs in and sets session cookie
       router.push('/friend');
       router.refresh();
     } catch (err: unknown) {
@@ -204,6 +153,15 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Quick helper to fill test credentials for rapid testing
+  const fillCredentials = (userEmail: string, userPass: string) => {
+    setMode('signin');
+    setEmail(userEmail);
+    setPassword(userPass);
+    setErrorMessage('');
+    setSuccessMessage('');
   };
 
   return (
@@ -221,19 +179,6 @@ export default function LoginPage() {
             College Event Food Order Management
           </p>
         </div>
-
-        {/* Missing Environment Variables Warning Banner */}
-        {envMissing && (
-          <div className="mb-4 p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs shadow-sm space-y-1 animate-in fade-in">
-            <div className="flex items-center gap-2 font-bold text-amber-900 text-sm">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Supabase Connection Needed</span>
-            </div>
-            <p className="text-slate-600 leading-relaxed">
-              Create a <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">.env.local</code> file in the project root with your Supabase URL &amp; keys (see <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">.env.example</code>).
-            </p>
-          </div>
-        )}
 
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 p-6 sm:p-8">
@@ -481,8 +426,31 @@ export default function LoginPage() {
             </form>
           )}
 
+          {/* Quick Demo Test Accounts Helper */}
+          <div className="mt-5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600">
+            <span className="font-bold text-slate-800 flex items-center gap-1 mb-1.5">
+              <Sparkles className="w-3 h-3 text-amber-500" /> Demo Quick Sign-In:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => fillCredentials('admin@campusbite.com', 'Admin123456')}
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-brand-300 font-semibold text-slate-700 cursor-pointer text-[10px]"
+              >
+                Admin (admin@campusbite.com)
+              </button>
+              <button
+                type="button"
+                onClick={() => fillCredentials('friend@campusbite.com', 'Friend123456')}
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-brand-300 font-semibold text-slate-700 cursor-pointer text-[10px]"
+              >
+                Friend (friend@campusbite.com)
+              </button>
+            </div>
+          </div>
+
           {/* Bottom Switcher */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
             {mode === 'signin' ? (
               <p className="text-xs text-slate-500">
                 Don&apos;t have an account yet?{' '}

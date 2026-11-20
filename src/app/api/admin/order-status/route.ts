@@ -1,69 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-check';
+import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getLocalStore, saveLocalStore } from '@/lib/local-store';
 import { OrderStatus } from '@/types/database';
-
-const VALID_STATUSES: OrderStatus[] = [
-  'Pending',
-  'Confirmed',
-  'Preparing',
-  'Ready',
-  'Delivered / Picked up',
-  'Cancelled',
-];
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireAdmin();
+    await requireAdmin();
     const body = await req.json();
-    const { orderId, newStatus, notes } = body;
+    const { orderId, newStatus } = body;
 
     if (!orderId || !newStatus) {
       return NextResponse.json({ error: 'orderId and newStatus are required' }, { status: 400 });
     }
 
-    if (!VALID_STATUSES.includes(newStatus as OrderStatus)) {
-      return NextResponse.json({ error: 'Invalid order status' }, { status: 400 });
+    if (isSupabaseConfigured()) {
+      const adminClient = createAdminClient();
+      const { data: updatedOrder, error } = await adminClient
+        .from('orders')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return NextResponse.json({ success: true, order: updatedOrder });
     }
 
-    const adminClient = createAdminClient();
-
-    // 1. Get current order status
-    const { data: currentOrder, error: fetchErr } = await adminClient
-      .from('orders')
-      .select('id, status')
-      .eq('id', orderId)
-      .single();
-
-    if (fetchErr || !currentOrder) {
+    // Local Store Fallback
+    const store = getLocalStore();
+    const order = store.orders.find((o) => o.id === orderId);
+    if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const oldStatus = currentOrder.status;
+    order.status = newStatus as OrderStatus;
+    order.updated_at = new Date().toISOString();
+    saveLocalStore(store);
 
-    // 2. Update order status
-    const { data: updatedOrder, error: updateErr } = await adminClient
-      .from('orders')
-      .update({
-        status: newStatus,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', orderId)
-      .select()
-      .single();
-
-    if (updateErr) throw updateErr;
-
-    // 3. Record in order_status_history
-    await adminClient.from('order_status_history').insert({
-      order_id: orderId,
-      old_status: oldStatus,
-      new_status: newStatus,
-      changed_by: session.user.id,
-      notes: notes || `Status changed from ${oldStatus} to ${newStatus}`,
-    });
-
-    return NextResponse.json({ success: true, order: updatedOrder });
+    return NextResponse.json({ success: true, order });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Server error';
     return NextResponse.json({ error: msg }, { status: 400 });

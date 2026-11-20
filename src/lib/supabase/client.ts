@@ -4,12 +4,9 @@ export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    // Return dummy client if env not configured yet to prevent client crashes before setup
-    return createBrowserClient(
-      'https://placeholder-project.supabase.co',
-      'placeholder-key'
-    );
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder') || supabaseUrl.includes('your-project')) {
+    // Local safe mock client to avoid net::ERR_NAME_NOT_RESOLVED
+    return createBrowserClient('http://localhost:3000', 'local-anon-key');
   }
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);

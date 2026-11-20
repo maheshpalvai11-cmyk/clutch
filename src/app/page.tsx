@@ -1,30 +1,16 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { getAuthSession } from '@/lib/auth-check';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getAuthSession();
 
-  if (!user) {
+  if (!session || !session.profile.is_active) {
     redirect('/login');
   }
 
-  // Fetch profile to determine role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, is_active')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !profile.is_active) {
-    redirect('/login');
-  }
-
-  if (profile.role === 'admin') {
+  if (session.profile.role === 'admin') {
     redirect('/admin');
   } else {
     redirect('/friend');
