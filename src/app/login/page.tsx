@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -15,6 +15,7 @@ import {
   UserPlus,
   LogIn,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 
 type AuthMode = 'signin' | 'signup';
@@ -36,12 +37,48 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [envMissing, setEnvMissing] = useState(false);
+
+  useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('your-project')) {
+      setEnvMissing(true);
+    }
+  }, []);
+
+  // Safe JSON parser for responses to prevent "Unexpected token '<'..."
+  const safeParseResponse = async (res: Response) => {
+    const contentType = res.headers.get('content-type') || '';
+    const text = await res.text();
+    if (contentType.includes('application/json')) {
+      try {
+        return JSON.parse(text);
+      } catch {
+        // Fallback below
+      }
+    }
+    // If HTML or non-JSON was returned (e.g. 500 error page from server)
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+      throw new Error(
+        'Database connection not ready. Please verify your Supabase URL and keys in .env.local.'
+      );
+    }
+    throw new Error(text || `Server returned status ${res.status}`);
+  };
 
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
+
+    if (envMissing) {
+      setErrorMessage(
+        'Database is not connected. Please add your Supabase credentials to .env.local (refer to .env.example).'
+      );
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -96,6 +133,13 @@ export default function LoginPage() {
     setErrorMessage('');
     setSuccessMessage('');
 
+    if (envMissing) {
+      setErrorMessage(
+        'Database is not connected. Please add your Supabase credentials to .env.local (refer to .env.example).'
+      );
+      return;
+    }
+
     if (!fullName.trim()) {
       setErrorMessage('Please enter your full name.');
       return;
@@ -130,7 +174,8 @@ export default function LoginPage() {
         }),
       });
 
-      const resData = await res.json();
+      const resData = await safeParseResponse(res);
+
       if (!res.ok) {
         throw new Error(resData.error || 'Failed to create account.');
       }
@@ -176,6 +221,19 @@ export default function LoginPage() {
             College Event Food Order Management
           </p>
         </div>
+
+        {/* Missing Environment Variables Warning Banner */}
+        {envMissing && (
+          <div className="mb-4 p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs shadow-sm space-y-1 animate-in fade-in">
+            <div className="flex items-center gap-2 font-bold text-amber-900 text-sm">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Supabase Connection Needed</span>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              Create a <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">.env.local</code> file in the project root with your Supabase URL &amp; keys (see <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">.env.example</code>).
+            </p>
+          </div>
+        )}
 
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 p-6 sm:p-8">

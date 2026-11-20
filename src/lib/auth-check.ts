@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { Profile } from '@/types/database';
 
 export interface AuthSession {
@@ -15,6 +16,10 @@ export interface AuthSession {
  * Throws an error or returns null if not authenticated or inactive.
  */
 export async function getAuthSession(): Promise<AuthSession | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
   const supabase = createClient();
   const {
     data: { user },

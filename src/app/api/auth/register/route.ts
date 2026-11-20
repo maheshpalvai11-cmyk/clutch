@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isSupabaseAdminConfigured } from '@/lib/supabase/config';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    // 1. Verify Supabase configuration first
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json(
+        {
+          error:
+            'Database is not connected yet. Please configure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your .env.local file (refer to .env.example).',
+        },
+        { status: 503 }
+      );
+    }
+
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    }
+
     const { full_name, email, password } = body;
 
     if (!full_name || !full_name.trim()) {
@@ -26,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     const adminClient = createAdminClient();
 
-    // 1. Create auth user with email_confirm: true so no SMTP email verification gate blocks student events
+    // 2. Create auth user with email_confirm: true so no SMTP verification gate blocks users
     const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email: cleanEmail,
       password,
@@ -45,12 +61,12 @@ export async function POST(req: NextRequest) {
         );
       }
       return NextResponse.json(
-        { error: authError?.message || 'Failed to create account.' },
+        { error: authError?.message || 'Failed to create account in database.' },
         { status: 400 }
       );
     }
 
-    // 2. Insert into profiles table with role: 'friend'
+    // 3. Insert into profiles table with role: 'friend'
     const { error: profileError } = await adminClient
       .from('profiles')
       .upsert(
@@ -67,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     if (profileError) {
       return NextResponse.json(
-        { error: `Account created but profile initialization failed: ${profileError.message}` },
+        { error: `Account created in auth, but profile insert failed: ${profileError.message}` },
         { status: 500 }
       );
     }
