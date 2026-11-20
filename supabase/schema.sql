@@ -173,6 +173,10 @@ CREATE POLICY "Users can view their own profile"
     ON public.profiles FOR SELECT
     USING (auth.uid() = id);
 
+CREATE POLICY "Users can insert their own profile"
+    ON public.profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
 -- 2. Campuses Policies
 CREATE POLICY "Authenticated users can view campuses"
     ON public.campuses FOR SELECT
