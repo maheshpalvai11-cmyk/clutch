@@ -23,7 +23,6 @@ export async function GET() {
           total_cost,
           created_at,
           team:teams(name, campus:campuses(name)),
-          friend:profiles(full_name),
           items:order_items(quantity, food_name_snapshot, variant_name_snapshot, subtotal_price, subtotal_cost)
         `)
         .order('created_at', { ascending: false });

@@ -49,9 +49,32 @@ export async function getAuthSession(): Promise<AuthSession | null> {
     }
   }
 
-  // 2. Cookie session fallback (works out of the box in local dev/demo)
+  // 2. Cookie session fallback (works out of the box in local dev/demo and Supabase session)
   const session = getSessionCookie();
   if (session && session.id) {
+    if (isSupabaseConfigured()) {
+      try {
+        const adminClient = createAdminClient();
+        const { data: profile } = await adminClient
+          .from('profiles')
+          .select('*')
+          .eq('id', session.id)
+          .single();
+
+        if (profile && profile.is_active) {
+          return {
+            user: {
+              id: profile.id,
+              email: profile.email,
+            },
+            profile,
+          };
+        }
+      } catch {
+        // continue to local store
+      }
+    }
+
     const store = getLocalStore();
     const profile = store.profiles.find((p) => p.id === session.id);
     if (profile && profile.is_active) {

@@ -35,7 +35,6 @@ export async function GET(req: NextRequest) {
         .select(`
           *,
           team:teams(*, campus:campuses(*)),
-          friend:profiles(id, full_name, email),
           items:order_items(*)
         `)
         .order('created_at', { ascending: false });
@@ -52,10 +51,30 @@ export async function GET(req: NextRequest) {
         query = query.eq('status', status);
       }
 
-      const { data: orders, error } = await query;
+      const { data: rawOrders, error } = await query;
       if (error) throw error;
 
-      let filtered = orders || [];
+      // Populate friend profiles without relying on PostgREST cross-schema relations
+      const friendIds = Array.from(new Set((rawOrders || []).map((o) => o.friend_id).filter(Boolean)));
+      let profileMap = new Map<string, { id: string; full_name: string; email: string }>();
+      if (friendIds.length > 0) {
+        const { data: profs } = await adminClient
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', friendIds);
+        if (profs) {
+          profileMap = new Map(profs.map((p) => [p.id, p]));
+        }
+      }
+
+      let filtered = (rawOrders || []).map((order) => ({
+        ...order,
+        friend: profileMap.get(order.friend_id) || {
+          id: order.friend_id,
+          full_name: 'Assigned Friend',
+          email: '',
+        },
+      }));
       if (search && search.trim()) {
         const q = search.trim().toLowerCase();
         filtered = filtered.filter(
