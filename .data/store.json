@@ -16,9 +16,9 @@
       "full_name": "Rahul Sharma",
       "email": "friend@campusbite.com",
       "password": "Friend123456",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2026-11-20T16:23:32.484Z",
-      "updated_at": "2026-11-20T16:23:32.484Z"
+      "updated_at": "2026-11-21T04:24:36.350Z"
     },
     {
       "id": "friend-1795192177803",
@@ -26,9 +26,9 @@
       "full_name": "Priya Sharma",
       "email": "priya_1795192177798@campus.edu",
       "password": "SecurePass123",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2026-11-20T16:29:37.803Z",
-      "updated_at": "2026-11-20T16:29:37.803Z"
+      "updated_at": "2026-11-20T16:59:24.664Z"
     },
     {
       "id": "friend-1795192480898",
@@ -38,7 +38,7 @@
       "password": "MAHESHPALVAI@123",
       "is_active": true,
       "created_at": "2026-11-20T16:34:40.898Z",
-      "updated_at": "2026-11-20T16:34:40.898Z"
+      "updated_at": "2026-11-21T04:24:41.250Z"
     },
     {
       "id": "admin-1795193182677",
@@ -56,41 +56,85 @@
       "full_name": "Student Volunteer 1855",
       "email": "student1855@campusbite.com",
       "password": "SecretPass123",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2026-11-20T16:46:22.688Z",
-      "updated_at": "2026-11-20T16:46:22.688Z"
+      "updated_at": "2026-11-20T16:59:28.312Z"
+    },
+    {
+      "id": "friend-1795194080421",
+      "role": "friend",
+      "full_name": "jaswanth",
+      "email": "mallojujashwanthchary@gmail.com",
+      "password": "Jeshu@2008",
+      "is_active": true,
+      "created_at": "2026-11-20T17:01:20.421Z",
+      "updated_at": "2026-11-20T17:01:20.421Z"
+    },
+    {
+      "id": "admin-1795194206950",
+      "role": "admin",
+      "full_name": "mahesh",
+      "email": "maheshpalvai11@gmail.com",
+      "password": "MAHESHPALVAI@123",
+      "is_active": true,
+      "created_at": "2026-11-20T17:03:26.950Z",
+      "updated_at": "2026-11-20T17:03:26.950Z"
     }
   ],
   "campuses": [
     {
       "id": "c1",
       "name": "Main Campus (North Wing)",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2026-11-20T16:23:32.484Z"
     },
     {
       "id": "c2",
       "name": "Technology & Engineering Campus",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2026-11-20T16:23:32.484Z"
     },
     {
       "id": "c3",
       "name": "Medical & Health Sciences Campus",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2026-11-20T16:23:32.484Z"
     },
     {
       "id": "c4",
       "name": "South Campus (Arts & Science)",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2026-11-20T16:23:32.484Z"
     },
     {
       "id": "c5",
       "name": "City Campus (MBA & Law Block)",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2026-11-20T16:23:32.484Z"
+    },
+    {
+      "id": "c-1795193585081",
+      "name": "YENEPOYA",
+      "is_active": true,
+      "created_at": "2026-11-20T16:53:05.081Z"
+    },
+    {
+      "id": "c-1795193602498",
+      "name": "SIPHER",
+      "is_active": true,
+      "created_at": "2026-11-20T16:53:22.498Z"
+    },
+    {
+      "id": "c-1795193613842",
+      "name": "S-VYASA",
+      "is_active": true,
+      "created_at": "2026-11-20T16:53:33.842Z"
+    },
+    {
+      "id": "c-1795193621604",
+      "name": "BEST",
+      "is_active": true,
+      "created_at": "2026-11-20T16:53:41.604Z"
     }
   ],
   "food_items": [
@@ -299,58 +343,211 @@
       "campus": {
         "id": "c1",
         "name": "Main Campus (North Wing)",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795193447559",
+      "name": "web",
+      "campus_id": "c1",
+      "collector_name": "mahi",
+      "collector_phone": "6305863399",
+      "created_by": "friend-001",
+      "created_at": "2026-11-20T16:50:47.559Z",
+      "campus": {
+        "id": "c1",
+        "name": "Main Campus (North Wing)",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795193471904",
+      "name": "hi",
+      "campus_id": "c1",
+      "collector_name": "siddu",
+      "collector_phone": "6305863399",
+      "created_by": "friend-001",
+      "created_at": "2026-11-20T16:51:11.904Z",
+      "campus": {
+        "id": "c1",
+        "name": "Main Campus (North Wing)",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795194158623",
+      "name": "cobra",
+      "campus_id": "c-1795193585081",
+      "collector_name": "vamshi",
+      "collector_phone": "8919010838",
+      "created_by": "friend-1795194080421",
+      "created_at": "2026-11-20T17:02:38.623Z",
+      "campus": {
+        "id": "c-1795193585081",
+        "name": "YENEPOYA",
         "is_active": true,
+        "created_at": "2026-11-20T16:53:05.081Z"
+      }
+    },
+    {
+      "id": "team-1795194455593",
+      "name": "python",
+      "campus_id": "c-1795193602498",
+      "collector_name": "vam",
+      "collector_phone": "6305863399",
+      "created_by": "friend-1795194080421",
+      "created_at": "2026-11-20T17:07:35.593Z",
+      "campus": {
+        "id": "c-1795193602498",
+        "name": "SIPHER",
+        "is_active": true,
+        "created_at": "2026-11-20T16:53:22.498Z"
+      }
+    },
+    {
+      "id": "team-1795234904350",
+      "name": "Test Cancel Team 1",
+      "campus_id": "c1",
+      "collector_name": "Person 1",
+      "collector_phone": "9999900001",
+      "created_by": "friend-001",
+      "created_at": "2026-11-21T04:21:44.350Z",
+      "campus": {
+        "id": "c1",
+        "name": "Main Campus (North Wing)",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795234904362",
+      "name": "Test Cancel Team 2",
+      "campus_id": "c2",
+      "collector_name": "Person 2",
+      "collector_phone": "9999900002",
+      "created_by": "friend-001",
+      "created_at": "2026-11-21T04:21:44.362Z",
+      "campus": {
+        "id": "c2",
+        "name": "Technology & Engineering Campus",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795234969311",
+      "name": "Test Team XYZ",
+      "campus_id": "c1",
+      "collector_name": "Alex",
+      "collector_phone": "9876543210",
+      "created_by": "admin-001",
+      "created_at": "2026-11-21T04:22:49.311Z",
+      "campus": {
+        "id": "c1",
+        "name": "Main Campus (North Wing)",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795235002588",
+      "name": "Test Team Lambda",
+      "campus_id": "c1",
+      "collector_name": "Alex",
+      "collector_phone": "9876543210",
+      "created_by": "admin-001",
+      "created_at": "2026-11-21T04:23:22.588Z",
+      "campus": {
+        "id": "c1",
+        "name": "Main Campus (North Wing)",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795235110453",
+      "name": "Cancelled Team A",
+      "campus_id": "c1",
+      "collector_name": "Lead A",
+      "collector_phone": "9876543211",
+      "created_by": "admin-001",
+      "created_at": "2026-11-21T04:25:10.453Z",
+      "campus": {
+        "id": "c1",
+        "name": "Main Campus (North Wing)",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795235110457",
+      "name": "Cancelled Team B",
+      "campus_id": "c2",
+      "collector_name": "Lead B",
+      "collector_phone": "9876543212",
+      "created_by": "admin-001",
+      "created_at": "2026-11-21T04:25:10.457Z",
+      "campus": {
+        "id": "c2",
+        "name": "Technology & Engineering Campus",
+        "is_active": false,
+        "created_at": "2026-11-20T16:23:32.484Z"
+      }
+    },
+    {
+      "id": "team-1795235110462",
+      "name": "Active Team C",
+      "campus_id": "c1",
+      "collector_name": "Lead C",
+      "collector_phone": "9876543213",
+      "created_by": "admin-001",
+      "created_at": "2026-11-21T04:25:10.462Z",
+      "campus": {
+        "id": "c1",
+        "name": "Main Campus (North Wing)",
+        "is_active": false,
         "created_at": "2026-11-20T16:23:32.484Z"
       }
     }
   ],
   "orders": [
     {
-      "id": "order-1795193241438",
-      "team_id": "team-1795193241438",
-      "friend_id": "friend-001",
+      "id": "order-1795235110462",
+      "team_id": "team-1795235110462",
+      "friend_id": "admin-001",
       "status": "Pending",
-      "notes": "Collect at reception",
-      "total_amount": 600,
-      "total_cost": 430,
-      "created_at": "2026-11-20T16:47:21.438Z",
-      "updated_at": "2026-11-20T16:47:21.438Z",
+      "notes": "",
+      "total_amount": 160,
+      "total_cost": 110,
+      "created_at": "2026-11-21T04:25:10.462Z",
+      "updated_at": "2026-11-21T04:25:10.462Z",
       "team": {
-        "id": "team-1795193241438",
-        "name": "Phoenix Coders",
+        "id": "team-1795235110462",
+        "name": "Active Team C",
         "campus_id": "c1",
-        "collector_name": "Rohit Verma",
-        "collector_phone": "9876500001",
-        "created_by": "friend-001",
-        "created_at": "2026-11-20T16:47:21.438Z",
+        "collector_name": "Lead C",
+        "collector_phone": "9876543213",
+        "created_by": "admin-001",
+        "created_at": "2026-11-21T04:25:10.462Z",
         "campus": {
           "id": "c1",
           "name": "Main Campus (North Wing)",
-          "is_active": true,
+          "is_active": false,
           "created_at": "2026-11-20T16:23:32.484Z"
         }
       },
       "friend": {
-        "id": "friend-001",
-        "full_name": "Rahul Sharma",
-        "email": "friend@campusbite.com"
+        "id": "admin-001",
+        "full_name": "Campus Event Director",
+        "email": "admin@campusbite.com"
       },
       "items": [
         {
-          "id": "oi-1795193241438-0.6661673599011102",
-          "order_id": "order-1795193241438",
-          "food_variant_id": "v1_1",
-          "food_name_snapshot": "Chicken Biryani",
-          "variant_name_snapshot": "Full",
-          "quantity": 2,
-          "unit_selling_price": 220,
-          "unit_purchase_cost": 160,
-          "subtotal_price": 440,
-          "subtotal_cost": 320
-        },
-        {
-          "id": "oi-1795193241438-0.03395258710190574",
-          "order_id": "order-1795193241438",
+          "id": "oi-1795235110462-0.3616671546983986",
+          "order_id": "order-1795235110462",
           "food_variant_id": "v2_1",
           "food_name_snapshot": "VEG Biryani",
           "variant_name_snapshot": "Full",

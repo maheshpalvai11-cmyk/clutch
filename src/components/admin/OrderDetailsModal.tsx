@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { Order, OrderStatus } from '@/types/database';
 import { formatINR, formatDateTime, getStatusBadgeClass } from '@/lib/utils';
-import { X, Check, Phone, MapPin, User, Clock, AlertTriangle } from 'lucide-react';
+import { X, Check, Phone, MapPin, User, Clock, AlertTriangle, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
 interface OrderDetailsModalProps {
   order: Order | null;
   onClose: () => void;
   onStatusUpdated: (updatedOrder: Order) => void;
+  onOrderDeleted?: (orderId: string) => void;
 }
 
 const ALL_STATUSES: OrderStatus[] = [
@@ -25,6 +26,7 @@ export function OrderDetailsModal({
   order,
   onClose,
   onStatusUpdated,
+  onOrderDeleted,
 }: OrderDetailsModalProps) {
   const { success, error } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus>(
@@ -91,6 +93,34 @@ export function OrderDetailsModal({
       onClose();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to cancel';
+      error(msg, 'Error');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!confirm(`Are you sure you want to permanently delete the order for "${order.team?.name || 'this team'}"? This action cannot be undone.`)) {
+      return;
+    }
+    setUpdating(true);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete order');
+
+      success('Order permanently deleted', 'Order Deleted');
+      if (onOrderDeleted) {
+        onOrderDeleted(order.id);
+      }
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete order';
       error(msg, 'Error');
     } finally {
       setUpdating(false);
@@ -278,19 +308,29 @@ export function OrderDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/70">
-          <div>
+        <div className="p-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70">
+          <div className="flex items-center gap-2">
             {order.status !== 'Cancelled' && (
               <button
                 type="button"
                 onClick={handleCancelOrder}
                 disabled={updating}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-600 hover:bg-amber-50 border border-amber-200 transition-colors cursor-pointer"
               >
                 <AlertTriangle className="w-3.5 h-3.5" />
                 <span>Cancel Order</span>
               </button>
             )}
+            <button
+              type="button"
+              onClick={handleDeleteOrder}
+              disabled={updating}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+              title="Permanently remove order"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Order</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-2">

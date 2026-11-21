@@ -15,7 +15,7 @@ const FOOD_IMAGE_CATALOG: FoodImageCatalogItem[] = [
   },
   {
     keywords: ['veg biryani', 'veg briyani', 'vegetable biryani', 'paneer biryani'],
-    url: 'https://images.unsplash.com/photo-1642821373181-696a54913e9a?w=800&auto=format&fit=crop&q=80',
+    url: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&auto=format&fit=crop&q=80',
   },
   {
     keywords: ['mutton biryani', 'dum biryani', 'biryani', 'briyani'],

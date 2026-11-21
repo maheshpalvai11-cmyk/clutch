@@ -145,7 +145,7 @@ function getInitialData(): LocalStoreData {
         id: 'f2',
         name: 'VEG Biryani',
         description: 'Fragrant basmati rice layered with fresh seasonal vegetables and saffron infused spices.',
-        image_url: 'https://images.unsplash.com/photo-1642821373181-696a54913e9a?w=800&auto=format&fit=crop&q=80',
+        image_url: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&auto=format&fit=crop&q=80',
         category: 'Biryani & Rice',
         is_active: true,
         variants: [
@@ -250,10 +250,6 @@ function getInitialData(): LocalStoreData {
 }
 
 export function getLocalStore(): LocalStoreData {
-  if (globalThis.__CAMPUSBITE_STORE__) {
-    return globalThis.__CAMPUSBITE_STORE__;
-  }
-
   try {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
@@ -262,6 +258,10 @@ export function getLocalStore(): LocalStoreData {
     }
   } catch {
     // Disk read fallback
+  }
+
+  if (globalThis.__CAMPUSBITE_STORE__) {
+    return globalThis.__CAMPUSBITE_STORE__;
   }
 
   const initial = getInitialData();

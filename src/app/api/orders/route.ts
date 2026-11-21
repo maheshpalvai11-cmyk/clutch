@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireUser } from '@/lib/auth-check';
+import { requireUser, requireAdmin } from '@/lib/auth-check';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getLocalStore, saveLocalStore, LocalOrder, LocalOrderItem } from '@/lib/local-store';
@@ -513,6 +513,69 @@ export async function PUT(req: NextRequest) {
 
     saveLocalStore(store);
     return NextResponse.json({ success: true, order });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Server error';
+    return NextResponse.json({ error: msg }, { status: 400 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    await requireAdmin();
+
+    const body = await req.json().catch(() => null);
+    const { searchParams } = new URL(req.url);
+    const queryId = searchParams.get('id');
+
+    let orderIds: string[] = [];
+
+    if (body?.orderIds && Array.isArray(body.orderIds)) {
+      orderIds = body.orderIds.map((id: unknown) => String(id)).filter(Boolean);
+    } else if (body?.orderId) {
+      orderIds = [String(body.orderId)];
+    } else if (queryId) {
+      orderIds = [queryId];
+    }
+
+    if (orderIds.length === 0) {
+      return NextResponse.json(
+        { error: 'No order ID(s) provided for deletion.' },
+        { status: 400 }
+      );
+    }
+
+    if (isSupabaseConfigured()) {
+      const adminClient = createAdminClient();
+
+      // Delete order items and status history first in case cascade is not enabled
+      await adminClient.from('order_items').delete().in('order_id', orderIds);
+      await adminClient.from('order_status_history').delete().in('order_id', orderIds);
+
+      const { error } = await adminClient
+        .from('orders')
+        .delete()
+        .in('id', orderIds);
+
+      if (error) throw error;
+      return NextResponse.json({
+        success: true,
+        count: orderIds.length,
+        deletedIds: orderIds,
+      });
+    }
+
+    // Local Store Fallback
+    const store = getLocalStore();
+    const prevCount = store.orders.length;
+    store.orders = store.orders.filter((o) => !orderIds.includes(o.id));
+    const deletedCount = prevCount - store.orders.length;
+    saveLocalStore(store);
+
+    return NextResponse.json({
+      success: true,
+      count: deletedCount,
+      deletedIds: orderIds,
+    });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Server error';
     return NextResponse.json({ error: msg }, { status: 400 });

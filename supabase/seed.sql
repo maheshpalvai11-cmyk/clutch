@@ -26,7 +26,7 @@ INSERT INTO public.food_items (id, name, description, image_url, category, is_ac
     '22222222-2222-2222-2222-222222222222',
     'VEG Biryani',
     'Fragrant basmati rice layered with fresh seasonal vegetables and saffron infused spices.',
-    'https://images.unsplash.com/photo-1642821373181-696a54913e9a?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&auto=format&fit=crop&q=80',
     'Biryani & Rice',
     true
 ),

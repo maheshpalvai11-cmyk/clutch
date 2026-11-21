@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   PackageCheck,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { Order, Campus, OrderStatus } from '@/types/database';
 import { formatINR, formatDateTime, getStatusBadgeClass } from '@/lib/utils';
@@ -52,6 +53,10 @@ export default function AdminOrdersPage() {
 
   // Selected Order for Modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Bulk Selection and Deletion
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchOrdersAndCampuses = useCallback(async () => {
     try {
@@ -101,6 +106,135 @@ export default function AdminOrdersPage() {
       error(msg);
     }
   };
+
+  // Selection Toggles
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.length === filteredOrders.length && filteredOrders.length > 0) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(filteredOrders.map((o) => o.id));
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectCancelled = () => {
+    const cancelledIds = orders
+      .filter((o) => o.status === 'Cancelled')
+      .map((o) => o.id);
+    setSelectedOrderIds(cancelledIds);
+  };
+
+  // Delete Handlers
+  const handleDeleteSelected = async () => {
+    if (selectedOrderIds.length === 0) return;
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete ${selectedOrderIds.length} selected order(s)? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: selectedOrderIds }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete orders');
+
+      success(
+        `Successfully deleted ${selectedOrderIds.length} order(s).`,
+        'Orders Deleted'
+      );
+      setOrders((prev) => prev.filter((o) => !selectedOrderIds.includes(o.id)));
+      setSelectedOrderIds([]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Deletion failed';
+      error(msg, 'Error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteSingleOrder = async (orderId: string, teamName?: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete the order for "${teamName || 'this team'}"?`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete order');
+
+      success('Order permanently deleted', 'Order Deleted');
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      setSelectedOrderIds((prev) => prev.filter((id) => id !== orderId));
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder(null);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Deletion failed';
+      error(msg, 'Error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteAllCancelled = async () => {
+    const cancelledOrders = orders.filter((o) => o.status === 'Cancelled');
+    if (cancelledOrders.length === 0) return;
+
+    if (
+      !confirm(
+        `Are you sure you want to delete ALL ${cancelledOrders.length} cancelled order(s)? This will clean up cancelled records permanently.`
+      )
+    ) {
+      return;
+    }
+
+    const cancelledIds = cancelledOrders.map((o) => o.id);
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: cancelledIds }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete cancelled orders');
+
+      success(
+        `Deleted all ${cancelledOrders.length} cancelled order(s).`,
+        'Cleaned Up'
+      );
+      setOrders((prev) => prev.filter((o) => o.status !== 'Cancelled'));
+      setSelectedOrderIds((prev) => prev.filter((id) => !cancelledIds.includes(id)));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error';
+      error(msg, 'Error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const cancelledOrdersCount = orders.filter((o) => o.status === 'Cancelled').length;
 
   // Filtered Orders for All Orders tab
   const filteredOrders = orders.filter((order) => {
@@ -265,14 +399,71 @@ export default function AdminOrdersPage() {
               </select>
             </div>
 
-            <button
-              onClick={fetchOrdersAndCampuses}
-              className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors self-end md:self-auto"
-              title="Refresh orders list"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2 self-end md:self-auto">
+              {cancelledOrdersCount > 0 && (
+                <button
+                  onClick={handleDeleteAllCancelled}
+                  disabled={deleting}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  title="Delete all cancelled orders permanently"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Delete Cancelled ({cancelledOrdersCount})</span>
+                </button>
+              )}
+
+              <button
+                onClick={fetchOrdersAndCampuses}
+                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+                title="Refresh orders list"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
+
+          {/* Bulk Selection Bar */}
+          {selectedOrderIds.length > 0 && (
+            <div className="p-3.5 bg-rose-50/80 border border-rose-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in shadow-xs">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="text-xs font-black text-rose-900 bg-rose-200/90 px-2.5 py-1 rounded-lg">
+                  {selectedOrderIds.length} Selected
+                </span>
+                <span className="text-xs text-rose-800">
+                  of {filteredOrders.length} orders
+                </span>
+                {cancelledOrdersCount > 0 && selectedOrderIds.length !== cancelledOrdersCount && (
+                  <button
+                    onClick={handleSelectCancelled}
+                    className="text-xs font-semibold text-rose-700 underline hover:text-rose-900 cursor-pointer ml-1"
+                  >
+                    Select all {cancelledOrdersCount} cancelled
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <button
+                  onClick={() => setSelectedOrderIds([])}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-rose-100/70 transition-colors cursor-pointer"
+                >
+                  Clear Selection
+                </button>
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={deleting}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>
+                    {deleting
+                      ? 'Deleting...'
+                      : `Delete Selected (${selectedOrderIds.length})`}
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Orders Table */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
@@ -293,6 +484,18 @@ export default function AdminOrdersPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 border-b border-slate-100 text-slate-600 font-semibold">
                     <tr>
+                      <th className="py-3 px-3 text-center w-10">
+                        <input
+                          type="checkbox"
+                          checked={
+                            filteredOrders.length > 0 &&
+                            selectedOrderIds.length === filteredOrders.length
+                          }
+                          onChange={toggleSelectAll}
+                          title="Select all orders"
+                          className="w-4 h-4 rounded text-brand-600 border-slate-300 focus:ring-brand-500 cursor-pointer"
+                        />
+                      </th>
                       <th className="py-3 px-4">Team</th>
                       <th className="py-3 px-4">Campus</th>
                       <th className="py-3 px-4">Collector</th>
@@ -313,8 +516,23 @@ export default function AdminOrdersPage() {
                         <tr
                           key={order.id}
                           onClick={() => setSelectedOrder(order)}
-                          className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                          className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${
+                            selectedOrderIds.includes(order.id)
+                              ? 'bg-rose-50/40'
+                              : ''
+                          }`}
                         >
+                          <td
+                            className="py-3 px-3 text-center w-10"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedOrderIds.includes(order.id)}
+                              onChange={() => toggleSelectOrder(order.id)}
+                              className="w-4 h-4 rounded text-brand-600 border-slate-300 focus:ring-brand-500 cursor-pointer"
+                            />
+                          </td>
                           <td className="py-3 px-4 font-bold text-slate-900">
                             {order.team?.name || 'Team'}
                           </td>
@@ -352,15 +570,27 @@ export default function AdminOrdersPage() {
                             {formatDateTime(order.created_at)}
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedOrder(order);
-                              }}
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 transition-colors"
-                            >
-                              Manage
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedOrder(order);
+                                }}
+                                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 transition-colors"
+                              >
+                                Manage
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteSingleOrder(order.id, order.team?.name);
+                                }}
+                                title="Delete this order"
+                                className="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -632,6 +862,10 @@ export default function AdminOrdersPage() {
           onClose={() => setSelectedOrder(null)}
           onStatusUpdated={() => {
             fetchOrdersAndCampuses();
+          }}
+          onOrderDeleted={(deletedId) => {
+            setOrders((prev) => prev.filter((o) => o.id !== deletedId));
+            setSelectedOrderIds((prev) => prev.filter((id) => id !== deletedId));
           }}
         />
       )}
