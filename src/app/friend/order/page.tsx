@@ -19,10 +19,12 @@ import {
   X,
   FileText,
   Lock,
+  QrCode,
 } from 'lucide-react';
 import { FoodItem, FoodVariant, Campus, Team, Order } from '@/types/database';
 import { formatINR } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
+import { PaymentQRModal } from '@/components/payment/PaymentQRModal';
 
 interface CartItemEntry {
   foodItemId: string;
@@ -64,6 +66,15 @@ function FriendOrderForm() {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderingOpen, setOrderingOpen] = useState(true);
+
+  // PhonePe QR Payment Modal
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState<{
+    orderId?: string;
+    amount: number;
+    teamName: string;
+    campusName?: string;
+  } | null>(null);
 
   // 1. Fetch initial menu, campuses, and teams
   const loadInitialData = useCallback(async () => {
@@ -285,21 +296,53 @@ function FriendOrderForm() {
         throw new Error(data.error || 'Failed to submit order');
       }
 
-      success(
-        editOrderId
-          ? 'Order modified successfully!'
-          : `Order for team "${teamName}" submitted successfully!`,
-        'Success'
-      );
+      const targetCampusName =
+        campuses.find((c) => c.id === campusId)?.name || 'Main Campus';
+
+      const createdOrderId = data.orderId || data.order?.id || '';
+
+      setPaymentModalData({
+        orderId: createdOrderId,
+        amount: totalAmount,
+        teamName: teamName.trim(),
+        campusName: targetCampusName,
+      });
 
       setReviewModalOpen(false);
-      router.push('/friend');
-      router.refresh();
+      setPaymentModalOpen(true);
+
+      success(
+        `Order registered! Total bill ${formatINR(totalAmount)}. Present PhonePe QR code to student.`,
+        'Order Placed'
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Submission failed';
       error(msg);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDoneNewOrder = () => {
+    setPaymentModalOpen(false);
+    setPaymentModalData(null);
+
+    // Reset all form inputs for a brand new order
+    setCart({});
+    setTeamName('');
+    setCollectorName('');
+    setCollectorPhone('');
+    setNotes('');
+    setSelectedTeamId('');
+    if (campuses.length > 0) {
+      setCampusId(campuses[0].id);
+    }
+
+    success('Payment complete! Ready for next team order.', 'New Order');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (editOrderId) {
+      router.push('/friend/order');
     }
   };
 
@@ -659,10 +702,10 @@ function FriendOrderForm() {
             <button
               type="button"
               onClick={() => setReviewModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-700 hover:to-amber-600 shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-purple-700 via-indigo-600 to-brand-600 hover:from-purple-800 hover:to-brand-700 shadow-md shadow-purple-500/25 transition-all cursor-pointer"
             >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Review &amp; Place Order</span>
+              <QrCode className="w-4 h-4" />
+              <span>Review &amp; Pay ({formatINR(totalAmount)})</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -742,13 +785,13 @@ function FriendOrderForm() {
               </div>
 
               {/* Total Calculation */}
-              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-purple-50/80 border border-purple-200/80 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-semibold text-amber-900 block">
-                    Estimated Total Amount
+                  <span className="text-xs font-semibold text-purple-900 block">
+                    Total Amount to Collect
                   </span>
-                  <span className="text-[10px] text-amber-700">
-                    Calculated for {totalQuantity} items
+                  <span className="text-[10px] text-purple-700">
+                    PhonePe QR will be displayed for {totalQuantity} items
                   </span>
                 </div>
                 <span className="text-xl font-black text-slate-900">
@@ -767,7 +810,7 @@ function FriendOrderForm() {
               <button
                 type="button"
                 onClick={() => setReviewModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 Back to Edit
               </button>
@@ -775,14 +818,30 @@ function FriendOrderForm() {
                 type="button"
                 onClick={handleSubmitOrder}
                 disabled={submitting}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-700 hover:to-amber-600 shadow-md shadow-brand-500/25 transition-all disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-700 via-indigo-600 to-brand-600 hover:from-purple-800 hover:to-brand-700 shadow-md shadow-purple-500/25 transition-all disabled:opacity-50 cursor-pointer"
               >
-                <CheckCircle className="w-4 h-4" />
-                <span>{submitting ? 'Submitting Order...' : 'Confirm & Save Order'}</span>
+                <QrCode className="w-4 h-4" />
+                <span>{submitting ? 'Placing Order...' : 'Confirm & Show PhonePe QR'}</span>
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* PHONEPE QR PAYMENT MODAL */}
+      {paymentModalData && (
+        <PaymentQRModal
+          isOpen={paymentModalOpen}
+          onClose={() => {
+            setPaymentModalOpen(false);
+            router.push('/friend');
+          }}
+          onDoneNewOrder={handleDoneNewOrder}
+          amount={paymentModalData.amount}
+          teamName={paymentModalData.teamName}
+          campusName={paymentModalData.campusName}
+          orderId={paymentModalData.orderId}
+        />
       )}
     </div>
   );

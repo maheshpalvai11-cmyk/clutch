@@ -13,16 +13,19 @@ import {
   Lock,
   CheckCircle2,
   RefreshCw,
+  QrCode,
 } from 'lucide-react';
 import { Order } from '@/types/database';
 import { formatINR, formatDateTime, getStatusBadgeClass } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
+import { PaymentQRModal } from '@/components/payment/PaymentQRModal';
 
 export default function FriendMyOrdersPage() {
   const { error } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOrderingOpen, setIsOrderingOpen] = useState(true);
+  const [selectedPaymentOrder, setSelectedPaymentOrder] = useState<Order | null>(null);
 
   const fetchMyOrders = useCallback(async () => {
     try {
@@ -189,27 +192,39 @@ export default function FriendMyOrdersPage() {
                       </span>
                     </div>
 
-                    {canEdit ? (
-                      <Link
-                        href={`/friend/order?orderId=${order.id}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 transition-colors"
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPaymentOrder(order)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer"
+                        title="Show PhonePe QR code for this order"
                       >
-                        <Edit className="w-3.5 h-3.5" />
-                        <span>Edit Order</span>
-                      </Link>
-                    ) : (
-                      <span
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-200"
-                        title={
-                          !isOrderingOpen
-                            ? 'Ordering closed by admin'
-                            : 'Order has transitioned past Pending status'
-                        }
-                      >
-                        <Lock className="w-3 h-3" />
-                        <span>Locked</span>
-                      </span>
-                    )}
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Payment QR</span>
+                      </button>
+
+                      {canEdit ? (
+                        <Link
+                          href={`/friend/order?orderId=${order.id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 transition-colors"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          <span>Edit Order</span>
+                        </Link>
+                      ) : (
+                        <span
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-200"
+                          title={
+                            !isOrderingOpen
+                              ? 'Ordering closed by admin'
+                              : 'Order has transitioned past Pending status'
+                          }
+                        >
+                          <Lock className="w-3 h-3" />
+                          <span>Locked</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -275,6 +290,19 @@ export default function FriendMyOrdersPage() {
             );
           })}
         </div>
+      )}
+
+      {/* PHONEPE QR PAYMENT MODAL */}
+      {selectedPaymentOrder && (
+        <PaymentQRModal
+          isOpen={!!selectedPaymentOrder}
+          onClose={() => setSelectedPaymentOrder(null)}
+          onDoneNewOrder={() => setSelectedPaymentOrder(null)}
+          amount={Number(selectedPaymentOrder.total_amount) || 0}
+          teamName={selectedPaymentOrder.team?.name || 'Student Team'}
+          campusName={selectedPaymentOrder.team?.campus?.name}
+          orderId={selectedPaymentOrder.id}
+        />
       )}
     </div>
   );

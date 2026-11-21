@@ -147,19 +147,11 @@
       "is_active": true,
       "variants": [
         {
-          "id": "v1_1",
-          "food_item_id": "f1",
-          "name": "Full",
-          "purchase_cost": 160,
-          "selling_price": 220,
-          "is_active": true
-        },
-        {
           "id": "v1_2",
           "food_item_id": "f1",
           "name": "Single",
           "purchase_cost": 100,
-          "selling_price": 140,
+          "selling_price": 100,
           "is_active": true
         }
       ]
@@ -173,19 +165,11 @@
       "is_active": true,
       "variants": [
         {
-          "id": "v2_1",
-          "food_item_id": "f2",
-          "name": "Full",
-          "purchase_cost": 110,
-          "selling_price": 160,
-          "is_active": true
-        },
-        {
           "id": "v2_2",
           "food_item_id": "f2",
           "name": "Single",
           "purchase_cost": 75,
-          "selling_price": 110,
+          "selling_price": 75,
           "is_active": true
         }
       ]
@@ -199,19 +183,11 @@
       "is_active": true,
       "variants": [
         {
-          "id": "v3_1",
-          "food_item_id": "f3",
-          "name": "Full",
-          "purchase_cost": 120,
-          "selling_price": 170,
-          "is_active": true
-        },
-        {
           "id": "v3_2",
           "food_item_id": "f3",
           "name": "Half",
           "purchase_cost": 75,
-          "selling_price": 110,
+          "selling_price": 75,
           "is_active": true
         }
       ]
@@ -219,10 +195,10 @@
     {
       "id": "f4",
       "name": "Veg Hakka Noodles",
-      "description": "Stir-fried noodles with bell peppers, shredded cabbage, carrots, and light soy sauce.",
+      "description": "",
       "image_url": "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=800&auto=format&fit=crop&q=80",
-      "category": "Chinese",
-      "is_active": true,
+      "category": "General",
+      "is_active": false,
       "variants": [
         {
           "id": "v4_1",
@@ -511,51 +487,78 @@
         "is_active": false,
         "created_at": "2026-11-20T16:23:32.484Z"
       }
+    },
+    {
+      "id": "team-1795235394933",
+      "name": "class",
+      "campus_id": "c-1795193585081",
+      "collector_name": "siddu",
+      "collector_phone": "6325149512",
+      "created_by": "friend-1795194080421",
+      "created_at": "2026-11-21T04:29:54.933Z",
+      "campus": {
+        "id": "c-1795193585081",
+        "name": "YENEPOYA",
+        "is_active": true,
+        "created_at": "2026-11-20T16:53:05.081Z"
+      }
     }
   ],
   "orders": [
     {
-      "id": "order-1795235110462",
-      "team_id": "team-1795235110462",
-      "friend_id": "admin-001",
+      "id": "order-1795235394933",
+      "team_id": "team-1795235394933",
+      "friend_id": "friend-1795194080421",
       "status": "Pending",
       "notes": "",
-      "total_amount": 160,
-      "total_cost": 110,
-      "created_at": "2026-11-21T04:25:10.462Z",
-      "updated_at": "2026-11-21T04:25:10.462Z",
+      "total_amount": 290,
+      "total_cost": 200,
+      "created_at": "2026-11-21T04:29:54.933Z",
+      "updated_at": "2026-11-21T04:29:54.933Z",
       "team": {
-        "id": "team-1795235110462",
-        "name": "Active Team C",
-        "campus_id": "c1",
-        "collector_name": "Lead C",
-        "collector_phone": "9876543213",
-        "created_by": "admin-001",
-        "created_at": "2026-11-21T04:25:10.462Z",
+        "id": "team-1795235394933",
+        "name": "class",
+        "campus_id": "c-1795193585081",
+        "collector_name": "siddu",
+        "collector_phone": "6325149512",
+        "created_by": "friend-1795194080421",
+        "created_at": "2026-11-21T04:29:54.933Z",
         "campus": {
-          "id": "c1",
-          "name": "Main Campus (North Wing)",
-          "is_active": false,
-          "created_at": "2026-11-20T16:23:32.484Z"
+          "id": "c-1795193585081",
+          "name": "YENEPOYA",
+          "is_active": true,
+          "created_at": "2026-11-20T16:53:05.081Z"
         }
       },
       "friend": {
-        "id": "admin-001",
-        "full_name": "Campus Event Director",
-        "email": "admin@campusbite.com"
+        "id": "friend-1795194080421",
+        "full_name": "jaswanth",
+        "email": "mallojujashwanthchary@gmail.com"
       },
       "items": [
         {
-          "id": "oi-1795235110462-0.3616671546983986",
-          "order_id": "order-1795235110462",
-          "food_variant_id": "v2_1",
-          "food_name_snapshot": "VEG Biryani",
+          "id": "oi-1795235394933-0.030104877977046196",
+          "order_id": "order-1795235394933",
+          "food_variant_id": "v1_1",
+          "food_name_snapshot": "Chicken Biryani",
           "variant_name_snapshot": "Full",
           "quantity": 1,
-          "unit_selling_price": 160,
-          "unit_purchase_cost": 110,
-          "subtotal_price": 160,
-          "subtotal_cost": 110
+          "unit_selling_price": 220,
+          "unit_purchase_cost": 160,
+          "subtotal_price": 220,
+          "subtotal_cost": 160
+        },
+        {
+          "id": "oi-1795235394933-0.5692584582647865",
+          "order_id": "order-1795235394933",
+          "food_variant_id": "v8_1",
+          "food_name_snapshot": "Cold Coffee with Ice Cream",
+          "variant_name_snapshot": "Large Glass",
+          "quantity": 1,
+          "unit_selling_price": 70,
+          "unit_purchase_cost": 40,
+          "subtotal_price": 70,
+          "subtotal_cost": 40
         }
       ]
     }
