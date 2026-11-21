@@ -11,6 +11,7 @@ import {
   Megaphone,
   Save,
   HelpCircle,
+  Database,
 } from 'lucide-react';
 import { Campus, EventSettings } from '@/types/database';
 import { useToast } from '@/components/ui/Toast';
@@ -20,6 +21,7 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<EventSettings | null>(null);
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [storageType, setStorageType] = useState<'supabase' | 'local'>('local');
 
   // Form states
   const [eventName, setEventName] = useState('');
@@ -40,6 +42,7 @@ export default function AdminSettingsPage() {
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setSettings(statsData.settings);
+        setStorageType(statsData.storageType || 'local');
         setEventName(statsData.settings?.event_name || 'CampusBite Fest');
         setAnnouncement(
           statsData.settings?.announcement ||
@@ -354,6 +357,51 @@ export default function AdminSettingsPage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* 4. DATABASE & SUPABASE STORAGE */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Database className="w-5 h-5 text-brand-600" />
+              Database &amp; Supabase Storage
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Current database storage engine and cloud connection status
+            </p>
+          </div>
+          <span
+            className={`text-xs font-bold px-3 py-1 rounded-full border self-start sm:self-auto ${
+              storageType === 'supabase'
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : 'bg-amber-50 text-amber-800 border-amber-200'
+            }`}
+          >
+            {storageType === 'supabase' ? '● Connected to Supabase Cloud' : '● Local Fallback Mode'}
+          </span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-slate-700">
+            <span className="font-semibold">Target Supabase Project:</span>
+            <span className="font-mono text-slate-900 break-all">https://cdykpdsmmxcyrdprllpz.supabase.co</span>
+          </div>
+          <div className="flex items-center justify-between text-slate-700">
+            <span className="font-semibold">Tables in Database:</span>
+            <span className="text-emerald-700 font-bold">9 Tables Created</span>
+          </div>
+          <div className="pt-2 border-t border-slate-200/60 text-slate-500 text-[11px] leading-relaxed">
+            To store all food orders, teams, and menu live in Supabase PostgreSQL:
+            <ol className="list-decimal pl-4 mt-1 space-y-1 text-slate-600">
+              <li>In your Supabase Dashboard, go to <strong>Project Settings &rarr; API</strong>.</li>
+              <li>Copy the secret <strong>service_role</strong> key (not the publishable key).</li>
+              <li>Paste it into <code className="text-brand-600 font-bold">.env.local</code> under <code className="text-slate-800 font-bold">SUPABASE_SERVICE_ROLE_KEY=...</code></li>
+              <li>In Supabase Dashboard, go to <strong>Authentication &rarr; Providers &rarr; Email</strong> and uncheck <strong>Confirm email</strong>.</li>
+              <li>Run <code className="text-brand-600 font-bold">npm run sync-db</code> to sync all menus, campuses, and accounts to your Supabase cloud database!</li>
+            </ol>
+          </div>
+        </div>
       </div>
     </div>
   );

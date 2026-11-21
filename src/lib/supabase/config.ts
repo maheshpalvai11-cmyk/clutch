@@ -4,10 +4,18 @@
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
   if (!url || !anonKey) return false;
   if (url.includes('placeholder') || url.includes('your-project')) return false;
   if (anonKey.includes('placeholder') || anonKey.includes('your-anon-key')) return false;
+  if (!serviceKey || serviceKey.includes('placeholder') || serviceKey.includes('your-service-role-key')) {
+    return false;
+  }
+  // The service_role key must not be the publishable/anon key
+  if (serviceKey === anonKey || serviceKey.startsWith('sb_publishable_')) {
+    return false;
+  }
 
   return url.startsWith('https://');
 }

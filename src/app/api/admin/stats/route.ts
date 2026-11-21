@@ -86,6 +86,7 @@ export async function GET() {
         statusCounts,
         recentOrders: allOrders.slice(0, 8),
         settings: settings || { ordering_open: true },
+        storageType: 'supabase',
       });
     }
 
@@ -138,6 +139,7 @@ export async function GET() {
       statusCounts,
       recentOrders: allOrders.slice(0, 8),
       settings: store.settings,
+      storageType: 'local',
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Server error';
