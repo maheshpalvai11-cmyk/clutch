@@ -57,6 +57,12 @@ export interface Team {
   created_at?: string;
   updated_at?: string;
   campus?: Campus;
+  orders?: {
+    id: string;
+    status: OrderStatus;
+    total_amount: number;
+    created_at: string;
+  }[];
 }
 
 export interface OrderItem {

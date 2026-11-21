@@ -20,13 +20,14 @@ import {
   PackageCheck,
   RefreshCw,
   Trash2,
+  Users,
 } from 'lucide-react';
-import { Order, Campus, OrderStatus } from '@/types/database';
+import { Order, Campus, OrderStatus, Team } from '@/types/database';
 import { formatINR, formatDateTime, getStatusBadgeClass } from '@/lib/utils';
 import { OrderDetailsModal } from '@/components/admin/OrderDetailsModal';
 import { useToast } from '@/components/ui/Toast';
 
-type ViewTab = 'all_orders' | 'procurement' | 'pickup';
+type ViewTab = 'all_orders' | 'procurement' | 'pickup' | 'teams';
 
 interface ProcurementItem {
   foodName: string;
@@ -44,6 +45,7 @@ export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState<ViewTab>('all_orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [teamsList, setTeamsList] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters & Search
@@ -60,9 +62,10 @@ export default function AdminOrdersPage() {
 
   const fetchOrdersAndCampuses = useCallback(async () => {
     try {
-      const [ordersRes, campusesRes] = await Promise.all([
+      const [ordersRes, campusesRes, teamsRes] = await Promise.all([
         fetch('/api/orders'),
         fetch('/api/admin/campuses'),
+        fetch('/api/teams'),
       ]);
 
       if (!ordersRes.ok) throw new Error('Failed to load orders');
@@ -72,6 +75,11 @@ export default function AdminOrdersPage() {
       if (campusesRes.ok) {
         const campusesData = await campusesRes.json();
         setCampuses(campusesData.campuses || []);
+      }
+
+      if (teamsRes.ok) {
+        const teamsData = await teamsRes.json();
+        setTeamsList(teamsData.teams || []);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error fetching orders';
@@ -84,6 +92,21 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     fetchOrdersAndCampuses();
   }, [fetchOrdersAndCampuses]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (
+        tabParam === 'teams' ||
+        tabParam === 'procurement' ||
+        tabParam === 'pickup' ||
+        tabParam === 'all_orders'
+      ) {
+        setActiveTab(tabParam as ViewTab);
+      }
+    }
+  }, []);
 
   // Quick Status Updater for Team Pickup table
   const handleQuickStatusChange = async (orderId: string, newStatus: OrderStatus) => {
@@ -156,6 +179,12 @@ export default function AdminOrdersPage() {
       );
       setOrders((prev) => prev.filter((o) => !selectedOrderIds.includes(o.id)));
       setSelectedOrderIds([]);
+      // Refresh teams to update registered team count automatically
+      const teamsRes = await fetch('/api/teams');
+      if (teamsRes.ok) {
+        const tData = await teamsRes.json();
+        setTeamsList(tData.teams || []);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Deletion failed';
       error(msg, 'Error');
@@ -188,6 +217,12 @@ export default function AdminOrdersPage() {
       setSelectedOrderIds((prev) => prev.filter((id) => id !== orderId));
       if (selectedOrder?.id === orderId) {
         setSelectedOrder(null);
+      }
+      // Refresh teams to update registered team count automatically
+      const teamsRes = await fetch('/api/teams');
+      if (teamsRes.ok) {
+        const tData = await teamsRes.json();
+        setTeamsList(tData.teams || []);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Deletion failed';
@@ -226,6 +261,12 @@ export default function AdminOrdersPage() {
       );
       setOrders((prev) => prev.filter((o) => o.status !== 'Cancelled'));
       setSelectedOrderIds((prev) => prev.filter((id) => !cancelledIds.includes(id)));
+      // Refresh teams to update registered team count automatically
+      const teamsRes = await fetch('/api/teams');
+      if (teamsRes.ok) {
+        const tData = await teamsRes.json();
+        setTeamsList(tData.teams || []);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error';
       error(msg, 'Error');
@@ -234,7 +275,52 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Team Delete Handler
+  const handleDeleteTeam = async (teamId: string, teamName: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete team "${teamName}" and all its orders? This will remove the team from registered teams.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/teams?id=${teamId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete team');
+
+      success(
+        `Team "${teamName}" and all associated orders were deleted.`,
+        'Team Removed'
+      );
+      await fetchOrdersAndCampuses();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Team deletion failed';
+      error(msg, 'Error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const cancelledOrdersCount = orders.filter((o) => o.status === 'Cancelled').length;
+
+  // Filtered Teams for Registered Teams tab
+  const filteredTeams = teamsList.filter((team) => {
+    const matchesSearch =
+      !searchQuery.trim() ||
+      team.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      team.collector_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      team.collector_phone?.includes(searchQuery);
+
+    const matchesCampus =
+      !selectedCampus || team.campus_id === selectedCampus;
+
+    return matchesSearch && matchesCampus;
+  });
 
   // Filtered Orders for All Orders tab
   const filteredOrders = orders.filter((order) => {
@@ -317,7 +403,7 @@ export default function AdminOrdersPage() {
         </div>
 
         {/* Navigation Sub-Tabs */}
-        <div className="flex items-center p-1 bg-slate-200/70 rounded-xl">
+        <div className="flex flex-wrap items-center p-1 bg-slate-200/70 rounded-xl gap-1">
           <button
             onClick={() => setActiveTab('all_orders')}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -350,6 +436,17 @@ export default function AdminOrdersPage() {
           >
             <PackageCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Team Pickup List</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('teams')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'teams'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5 text-blue-600" />
+            <span>Registered Teams ({teamsList.length})</span>
           </button>
         </div>
       </div>
@@ -855,6 +952,176 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
+      {/* TAB 4: REGISTERED TEAMS VIEW */}
+      {activeTab === 'teams' && (
+        <div className="space-y-4">
+          {/* Controls Bar */}
+          <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex flex-1 items-center gap-2">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search team or collector..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                />
+              </div>
+
+              <select
+                value={selectedCampus}
+                onChange={(e) => setSelectedCampus(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              >
+                <option value="">All Campuses</option>
+                {campuses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 self-end md:self-auto">
+              <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
+                Registered Teams: <span className="text-brand-600 font-black">{teamsList.length}</span>
+              </span>
+              <button
+                onClick={fetchOrdersAndCampuses}
+                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
+                title="Refresh teams list"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Info Banner */}
+          <div className="flex items-center justify-between p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-2xl text-xs text-blue-900">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-600 shrink-0" />
+              <span>
+                <strong>Team Count Synchronization:</strong> When an admin deletes a team or all orders of a team, it automatically removes the team and reduces the registered teams count everywhere.
+              </span>
+            </div>
+          </div>
+
+          {/* Teams Table */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+            {filteredTeams.length === 0 ? (
+              <div className="p-12 text-center text-slate-400">
+                <Users className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                <p className="text-sm font-semibold text-slate-600">No registered teams found</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {teamsList.length === 0
+                    ? 'No student teams have registered yet.'
+                    : 'No teams match your search or campus filter.'}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-100 text-slate-600 font-semibold">
+                    <tr>
+                      <th className="py-3 px-4 w-12 text-center">#</th>
+                      <th className="py-3 px-4">Team Name</th>
+                      <th className="py-3 px-4">Campus</th>
+                      <th className="py-3 px-4">Collector Details</th>
+                      <th className="py-3 px-4">Associated Orders</th>
+                      <th className="py-3 px-4 text-center w-28">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredTeams.map((team, idx) => {
+                      const teamOrders = orders.filter((o) => o.team_id === team.id);
+                      return (
+                        <tr
+                          key={team.id}
+                          className="hover:bg-slate-50/70 transition-colors align-top"
+                        >
+                          <td className="py-3.5 px-4 text-center font-bold text-slate-400">
+                            {idx + 1}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <p className="font-bold text-slate-900 text-sm">
+                              {team.name}
+                            </p>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              ID: {team.id.slice(0, 8)}...
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-600">
+                            <span className="inline-flex items-center gap-1 font-medium bg-slate-100 px-2 py-0.5 rounded-md text-[11px]">
+                              <MapPin className="w-3 h-3 text-brand-600" />
+                              {team.campus?.name || 'Main Campus'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <p className="font-bold text-slate-800">
+                              {team.collector_name}
+                            </p>
+                            <a
+                              href={`tel:${team.collector_phone}`}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:underline mt-0.5"
+                            >
+                              <Phone className="w-3 h-3" />
+                              {team.collector_phone}
+                            </a>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {teamOrders.length === 0 ? (
+                              <span className="text-[11px] text-slate-400 italic">
+                                No active orders
+                              </span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1.5 items-center">
+                                {teamOrders.map((ord) => (
+                                  <button
+                                    key={ord.id}
+                                    onClick={() => setSelectedOrder(ord)}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] transition-colors cursor-pointer"
+                                    title="Click to view order details"
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        ord.status === 'Cancelled'
+                                          ? 'bg-rose-500'
+                                          : ord.status === 'Delivered / Picked up'
+                                          ? 'bg-emerald-500'
+                                          : 'bg-amber-500'
+                                      }`}
+                                    />
+                                    <span className="font-semibold">{ord.status}</span>
+                                    <span className="text-slate-400">&bull;</span>
+                                    <span className="font-bold text-slate-900">{formatINR(Number(ord.total_amount))}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <button
+                              onClick={() => handleDeleteTeam(team.id, team.name)}
+                              disabled={deleting}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                              title={`Delete team "${team.name}" and remove from registered teams`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Delete</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Selected Order Details Modal */}
       {selectedOrder && (
         <OrderDetailsModal
@@ -866,6 +1133,7 @@ export default function AdminOrdersPage() {
           onOrderDeleted={(deletedId) => {
             setOrders((prev) => prev.filter((o) => o.id !== deletedId));
             setSelectedOrderIds((prev) => prev.filter((id) => id !== deletedId));
+            fetchOrdersAndCampuses();
           }}
         />
       )}

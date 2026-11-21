@@ -547,6 +547,16 @@ export async function DELETE(req: NextRequest) {
     if (isSupabaseConfigured()) {
       const adminClient = createAdminClient();
 
+      // Find affected team IDs before deleting orders
+      const { data: targetOrders } = await adminClient
+        .from('orders')
+        .select('id, team_id')
+        .in('id', orderIds);
+
+      const affectedTeamIds = Array.from(
+        new Set((targetOrders || []).map((o) => o.team_id).filter(Boolean))
+      );
+
       // Delete order items and status history first in case cascade is not enabled
       await adminClient.from('order_items').delete().in('order_id', orderIds);
       await adminClient.from('order_status_history').delete().in('order_id', orderIds);
@@ -557,6 +567,19 @@ export async function DELETE(req: NextRequest) {
         .in('id', orderIds);
 
       if (error) throw error;
+
+      // Check if affected teams have any remaining orders; if not, delete the team from registered teams!
+      for (const tId of affectedTeamIds) {
+        const { count } = await adminClient
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('team_id', tId);
+
+        if (!count || count === 0) {
+          await adminClient.from('teams').delete().eq('id', tId);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         count: orderIds.length,
@@ -567,8 +590,25 @@ export async function DELETE(req: NextRequest) {
     // Local Store Fallback
     const store = getLocalStore();
     const prevCount = store.orders.length;
+
+    // Find affected team IDs before deleting
+    const targetOrders = store.orders.filter((o) => orderIds.includes(o.id));
+    const affectedTeamIds = Array.from(
+      new Set(targetOrders.map((o) => o.team_id).filter(Boolean))
+    );
+
+    // Remove orders
     store.orders = store.orders.filter((o) => !orderIds.includes(o.id));
     const deletedCount = prevCount - store.orders.length;
+
+    // Clean up teams that have no remaining orders
+    for (const tId of affectedTeamIds) {
+      const hasOtherOrders = store.orders.some((o) => o.team_id === tId);
+      if (!hasOtherOrders) {
+        store.teams = store.teams.filter((t) => t.id !== tId);
+      }
+    }
+
     saveLocalStore(store);
 
     return NextResponse.json({

@@ -293,202 +293,6 @@
   ],
   "teams": [
     {
-      "id": "t1",
-      "name": "RoboKnights",
-      "campus_id": "c1",
-      "collector_name": "Anand Kumar",
-      "collector_phone": "9876543210",
-      "created_at": "2026-11-20T16:23:32.484Z"
-    },
-    {
-      "id": "t2",
-      "name": "BinaryHacks",
-      "campus_id": "c2",
-      "collector_name": "Sneha Patel",
-      "collector_phone": "9845123456",
-      "created_at": "2026-11-20T16:23:32.484Z"
-    },
-    {
-      "id": "team-1795193241438",
-      "name": "Phoenix Coders",
-      "campus_id": "c1",
-      "collector_name": "Rohit Verma",
-      "collector_phone": "9876500001",
-      "created_by": "friend-001",
-      "created_at": "2026-11-20T16:47:21.438Z",
-      "campus": {
-        "id": "c1",
-        "name": "Main Campus (North Wing)",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795193447559",
-      "name": "web",
-      "campus_id": "c1",
-      "collector_name": "mahi",
-      "collector_phone": "6305863399",
-      "created_by": "friend-001",
-      "created_at": "2026-11-20T16:50:47.559Z",
-      "campus": {
-        "id": "c1",
-        "name": "Main Campus (North Wing)",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795193471904",
-      "name": "hi",
-      "campus_id": "c1",
-      "collector_name": "siddu",
-      "collector_phone": "6305863399",
-      "created_by": "friend-001",
-      "created_at": "2026-11-20T16:51:11.904Z",
-      "campus": {
-        "id": "c1",
-        "name": "Main Campus (North Wing)",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795194158623",
-      "name": "cobra",
-      "campus_id": "c-1795193585081",
-      "collector_name": "vamshi",
-      "collector_phone": "8919010838",
-      "created_by": "friend-1795194080421",
-      "created_at": "2026-11-20T17:02:38.623Z",
-      "campus": {
-        "id": "c-1795193585081",
-        "name": "YENEPOYA",
-        "is_active": true,
-        "created_at": "2026-11-20T16:53:05.081Z"
-      }
-    },
-    {
-      "id": "team-1795194455593",
-      "name": "python",
-      "campus_id": "c-1795193602498",
-      "collector_name": "vam",
-      "collector_phone": "6305863399",
-      "created_by": "friend-1795194080421",
-      "created_at": "2026-11-20T17:07:35.593Z",
-      "campus": {
-        "id": "c-1795193602498",
-        "name": "SIPHER",
-        "is_active": true,
-        "created_at": "2026-11-20T16:53:22.498Z"
-      }
-    },
-    {
-      "id": "team-1795234904350",
-      "name": "Test Cancel Team 1",
-      "campus_id": "c1",
-      "collector_name": "Person 1",
-      "collector_phone": "9999900001",
-      "created_by": "friend-001",
-      "created_at": "2026-11-21T04:21:44.350Z",
-      "campus": {
-        "id": "c1",
-        "name": "Main Campus (North Wing)",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795234904362",
-      "name": "Test Cancel Team 2",
-      "campus_id": "c2",
-      "collector_name": "Person 2",
-      "collector_phone": "9999900002",
-      "created_by": "friend-001",
-      "created_at": "2026-11-21T04:21:44.362Z",
-      "campus": {
-        "id": "c2",
-        "name": "Technology & Engineering Campus",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795234969311",
-      "name": "Test Team XYZ",
-      "campus_id": "c1",
-      "collector_name": "Alex",
-      "collector_phone": "9876543210",
-      "created_by": "admin-001",
-      "created_at": "2026-11-21T04:22:49.311Z",
-      "campus": {
-        "id": "c1",
-        "name": "Main Campus (North Wing)",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795235002588",
-      "name": "Test Team Lambda",
-      "campus_id": "c1",
-      "collector_name": "Alex",
-      "collector_phone": "9876543210",
-      "created_by": "admin-001",
-      "created_at": "2026-11-21T04:23:22.588Z",
-      "campus": {
-        "id": "c1",
-        "name": "Main Campus (North Wing)",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795235110453",
-      "name": "Cancelled Team A",
-      "campus_id": "c1",
-      "collector_name": "Lead A",
-      "collector_phone": "9876543211",
-      "created_by": "admin-001",
-      "created_at": "2026-11-21T04:25:10.453Z",
-      "campus": {
-        "id": "c1",
-        "name": "Main Campus (North Wing)",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795235110457",
-      "name": "Cancelled Team B",
-      "campus_id": "c2",
-      "collector_name": "Lead B",
-      "collector_phone": "9876543212",
-      "created_by": "admin-001",
-      "created_at": "2026-11-21T04:25:10.457Z",
-      "campus": {
-        "id": "c2",
-        "name": "Technology & Engineering Campus",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
-      "id": "team-1795235110462",
-      "name": "Active Team C",
-      "campus_id": "c1",
-      "collector_name": "Lead C",
-      "collector_phone": "9876543213",
-      "created_by": "admin-001",
-      "created_at": "2026-11-21T04:25:10.462Z",
-      "campus": {
-        "id": "c1",
-        "name": "Main Campus (North Wing)",
-        "is_active": false,
-        "created_at": "2026-11-20T16:23:32.484Z"
-      }
-    },
-    {
       "id": "team-1795235394933",
       "name": "class",
       "campus_id": "c-1795193585081",
@@ -502,9 +306,93 @@
         "is_active": true,
         "created_at": "2026-11-20T16:53:05.081Z"
       }
+    },
+    {
+      "id": "team-1795236119688",
+      "name": "ctrl +c",
+      "campus_id": "c-1795193585081",
+      "collector_name": "vamc",
+      "collector_phone": "1234567890",
+      "created_by": "friend-1795194080421",
+      "created_at": "2026-11-21T04:41:59.688Z",
+      "campus": {
+        "id": "c-1795193585081",
+        "name": "YENEPOYA",
+        "is_active": true,
+        "created_at": "2026-11-20T16:53:05.081Z"
+      }
     }
   ],
   "orders": [
+    {
+      "id": "order-1795236119688",
+      "team_id": "team-1795236119688",
+      "friend_id": "friend-1795194080421",
+      "status": "Delivered / Picked up",
+      "notes": "",
+      "total_amount": 250,
+      "total_cost": 250,
+      "created_at": "2026-11-21T04:41:59.688Z",
+      "updated_at": "2026-11-21T04:46:33.496Z",
+      "team": {
+        "id": "team-1795236119688",
+        "name": "ctrl +c",
+        "campus_id": "c-1795193585081",
+        "collector_name": "vamc",
+        "collector_phone": "1234567890",
+        "created_by": "friend-1795194080421",
+        "created_at": "2026-11-21T04:41:59.688Z",
+        "campus": {
+          "id": "c-1795193585081",
+          "name": "YENEPOYA",
+          "is_active": true,
+          "created_at": "2026-11-20T16:53:05.081Z"
+        }
+      },
+      "friend": {
+        "id": "friend-1795194080421",
+        "full_name": "jaswanth",
+        "email": "mallojujashwanthchary@gmail.com"
+      },
+      "items": [
+        {
+          "id": "oi-1795236119688-0.07954727633769254",
+          "order_id": "order-1795236119688",
+          "food_variant_id": "v1_2",
+          "food_name_snapshot": "Chicken Biryani",
+          "variant_name_snapshot": "Single",
+          "quantity": 1,
+          "unit_selling_price": 100,
+          "unit_purchase_cost": 100,
+          "subtotal_price": 100,
+          "subtotal_cost": 100
+        },
+        {
+          "id": "oi-1795236119688-0.33686236649737367",
+          "order_id": "order-1795236119688",
+          "food_variant_id": "v2_2",
+          "food_name_snapshot": "VEG Biryani",
+          "variant_name_snapshot": "Single",
+          "quantity": 1,
+          "unit_selling_price": 75,
+          "unit_purchase_cost": 75,
+          "subtotal_price": 75,
+          "subtotal_cost": 75
+        },
+        {
+          "id": "oi-1795236119688-0.41348983721274757",
+          "order_id": "order-1795236119688",
+          "food_variant_id": "v3_2",
+          "food_name_snapshot": "Chicken Fried Rice",
+          "variant_name_snapshot": "Half",
+          "quantity": 1,
+          "unit_selling_price": 75,
+          "unit_purchase_cost": 75,
+          "subtotal_price": 75,
+          "subtotal_cost": 75
+        }
+      ]
+    },
     {
       "id": "order-1795235394933",
       "team_id": "team-1795235394933",

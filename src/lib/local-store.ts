@@ -222,24 +222,7 @@ function getInitialData(): LocalStoreData {
         ],
       },
     ],
-    teams: [
-      {
-        id: 't1',
-        name: 'RoboKnights',
-        campus_id: 'c1',
-        collector_name: 'Anand Kumar',
-        collector_phone: '9876543210',
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: 't2',
-        name: 'BinaryHacks',
-        campus_id: 'c2',
-        collector_name: 'Sneha Patel',
-        collector_phone: '9845123456',
-        created_at: new Date().toISOString(),
-      },
-    ],
+    teams: [],
     orders: [],
     settings: {
       ordering_open: true,
@@ -253,7 +236,22 @@ export function getLocalStore(): LocalStoreData {
   try {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
-      globalThis.__CAMPUSBITE_STORE__ = JSON.parse(content);
+      const store: LocalStoreData = JSON.parse(content);
+
+      // Only teams that have placed food orders are kept
+      if (store.orders && store.teams) {
+        const teamIdsWithOrders = new Set(store.orders.map((o) => o.team_id).filter(Boolean));
+        if (store.teams.some((t) => !teamIdsWithOrders.has(t.id))) {
+          store.teams = store.teams.filter((t) => teamIdsWithOrders.has(t.id));
+          try {
+            fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), 'utf-8');
+          } catch {
+            // write fallback
+          }
+        }
+      }
+
+      globalThis.__CAMPUSBITE_STORE__ = store;
       return globalThis.__CAMPUSBITE_STORE__!;
     }
   } catch {
@@ -265,6 +263,7 @@ export function getLocalStore(): LocalStoreData {
   }
 
   const initial = getInitialData();
+  initial.teams = [];
   globalThis.__CAMPUSBITE_STORE__ = initial;
   saveLocalStore(initial);
   return initial;

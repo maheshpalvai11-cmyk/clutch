@@ -186,28 +186,46 @@ export default function AdminDashboardPage() {
       {/* 6 Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {/* Total Teams */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:border-brand-300 transition-all">
+        <Link
+          href="/admin/orders?tab=teams"
+          className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:border-brand-400 hover:shadow-md transition-all group cursor-pointer block"
+          title="Click to view and manage registered teams"
+        >
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-brand-600 transition-colors">
               Teams
             </span>
-            <Users className="w-4 h-4 text-brand-600" />
+            <Users className="w-4 h-4 text-brand-600 group-hover:scale-110 transition-transform" />
           </div>
-          <p className="text-2xl font-black text-slate-900">{stats?.totalTeams || 0}</p>
-          <p className="text-[10px] text-slate-400 mt-1">Registered teams</p>
-        </div>
+          <div className="flex items-baseline justify-between">
+            <p className="text-2xl font-black text-slate-900">{stats?.totalTeams || 0}</p>
+            <span className="text-[10px] font-bold text-brand-600 group-hover:translate-x-0.5 transition-transform flex items-center">
+              Manage &rarr;
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-1">Registered teams &bull; click</p>
+        </Link>
 
         {/* Total Orders */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:border-brand-300 transition-all">
+        <Link
+          href="/admin/orders"
+          className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:border-blue-400 hover:shadow-md transition-all group cursor-pointer block"
+          title="Click to view and manage all orders"
+        >
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-blue-600 transition-colors">
               Orders
             </span>
-            <ShoppingBag className="w-4 h-4 text-blue-600" />
+            <ShoppingBag className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform" />
           </div>
-          <p className="text-2xl font-black text-slate-900">{stats?.totalOrders || 0}</p>
-          <p className="text-[10px] text-slate-400 mt-1">Submitted orders</p>
-        </div>
+          <div className="flex items-baseline justify-between">
+            <p className="text-2xl font-black text-slate-900">{stats?.totalOrders || 0}</p>
+            <span className="text-[10px] font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform flex items-center">
+              View &rarr;
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-1">Submitted orders &bull; click</p>
+        </Link>
 
         {/* Total Food Quantities */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:border-brand-300 transition-all">

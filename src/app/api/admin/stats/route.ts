@@ -13,14 +13,11 @@ export async function GET() {
     if (isSupabaseConfigured()) {
       const adminClient = createAdminClient();
 
-      const { count: totalTeams } = await adminClient
-        .from('teams')
-        .select('*', { count: 'exact', head: true });
-
       const { data: orders, error: ordersErr } = await adminClient
         .from('orders')
         .select(`
           id,
+          team_id,
           status,
           total_amount,
           total_cost,
@@ -36,6 +33,10 @@ export async function GET() {
       const allOrders = orders || [];
       const nonCancelledOrders = allOrders.filter((o) => o.status !== 'Cancelled');
       const totalOrders = allOrders.length;
+
+      // Count only unique teams that actually placed food orders
+      const uniqueOrderedTeams = new Set(allOrders.map((o) => o.team_id).filter(Boolean));
+      const totalTeams = uniqueOrderedTeams.size;
 
       let expectedRevenue = 0;
       let expectedPurchaseCost = 0;
@@ -124,8 +125,11 @@ export async function GET() {
       }
     });
 
+    const uniqueOrderedTeams = new Set(allOrders.map((o) => o.team_id).filter(Boolean));
+    const totalTeams = uniqueOrderedTeams.size;
+
     return NextResponse.json({
-      totalTeams: store.teams.length,
+      totalTeams,
       totalOrders: allOrders.length,
       totalFoodQuantities,
       expectedRevenue,
